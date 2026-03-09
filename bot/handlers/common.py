@@ -1,0 +1,303 @@
+"""Common handlers: registration, profile, help."""
+
+import logging
+from typing import TYPE_CHECKING
+
+from aiogram import F, Router, types
+from aiogram.filters import Command, CommandStart
+
+if TYPE_CHECKING:
+    from aiogram.fsm.context import FSMContext
+
+from bot.database.crud_modules.user_crud import (
+    UserCreateParams,
+    UserUpdateParams,
+    create_user,
+    get_user_by_telegram_id,
+    update_user_profile,
+)
+from bot.database.database import get_session
+from bot.database.models.enums import UserRole
+from bot.keyboards.menus import (
+    get_back_keyboard,
+    get_edit_profile_keyboard,
+    get_main_menu_keyboard,
+    get_profile_keyboard,
+    get_role_keyboard,
+)
+from bot.states.states import ProfileEdit, UserRegistration
+
+logger = logging.getLogger(__name__)
+
+common_router = Router()
+
+FIELD_NAMES = {
+    "phone": "телефон",
+    "email": "email",
+    "position": "должность",
+}
+
+HELP_TEXT = (
+    "<b>Grad Service - Управление проектами</b>\n\n"
+    "Команды:\n"
+    "/start - Регистрация\n"
+    "/menu - Главное меню\n"
+    "/help - Эта справка\n"
+    "/profile - Мой профиль\n\n"
+    "Для помощи обратитесь к руководителю проекта."
+)
+
+
+def _build_profile_text(user: object) -> str:
+    """Build profile text from user object."""
+    last = user.last_name or ""
+    phone = user.phone or "Не указан"
+    email = user.email or "Не указан"
+    position = user.position or "Не указана"
+    lines = [
+        "<b>Профиль</b>",
+        "",
+        f"Имя: {user.first_name} {last}",
+        f"Роль: {user.role.value}",
+        f"Телефон: {phone}",
+        f"Email: {email}",
+        f"Должность: {position}",
+    ]
+    return "\n".join(lines)
+
+
+def _get_update_params(data: dict, position: str) -> UserUpdateParams:
+    """Get user update params from data."""
+    params: UserUpdateParams = {}
+    if data.get("phone"):
+        params["phone"] = data["phone"]
+    if data.get("email"):
+        params["email"] = data["email"]
+    if position and position != "пропустить":
+        params["position"] = position
+    return params
+
+
+@common_router.message(CommandStart())
+async def cmd_start(
+    message: types.Message, state: FSMContext,
+) -> None:
+    """Handle /start command."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, message.from_user.id)
+        if user:
+            await message.answer(
+                f"С возвращением, {user.first_name}!",
+                reply_markup=get_main_menu_keyboard(user.role),
+            )
+            return
+        await message.answer(
+            "Добро пожаловать в Grad Service!\nВыберите вашу роль:",
+            reply_markup=get_role_keyboard(),
+        )
+        await state.set_state(UserRegistration.role)
+
+
+@common_router.callback_query(F.data.startswith("role_"))
+async def process_role(
+    callback: types.CallbackQuery, state: FSMContext,
+) -> None:
+    """Process role selection."""
+    role_str = callback.data.split("_")[1]
+    role = UserRole(role_str)
+    await state.update_data(role=role)
+    await callback.message.edit_text(
+        f"Вы выбрали: {role.value}\nВведите ваш телефон:",
+    )
+    await state.set_state(UserRegistration.phone)
+
+
+@common_router.message(UserRegistration.phone)
+async def process_phone(
+    message: types.Message, state: FSMContext,
+) -> None:
+    """Process phone input."""
+    phone = message.text
+    await state.update_data(phone=phone)
+    await message.answer("Введите ваш email:")
+    await state.set_state(UserRegistration.email)
+
+
+@common_router.message(UserRegistration.email)
+async def process_email(
+    message: types.Message, state: FSMContext,
+) -> None:
+    """Process email input."""
+    email = message.text
+    await state.update_data(email=email)
+    await message.answer(
+        "Введите вашу должность "
+        "(для клиентов можно пропустить):",
+    )
+    await state.set_state(UserRegistration.position)
+
+
+@common_router.message(UserRegistration.position)
+async def process_position(
+    message: types.Message, state: FSMContext,
+) -> None:
+    """Process position input."""
+    position = message.text
+    await state.update_data(position=position)
+    data = await state.get_data()
+    role = data.get("role", UserRole.CLIENT)
+    async for session in get_session():
+        await _register_user(session, message, data, role)
+    await message.answer(
+        "Регистрация завершена!",
+        reply_markup=get_main_menu_keyboard(role),
+    )
+    await state.clear()
+
+
+async def _register_user(
+    session: object,
+    message: types.Message,
+    data: dict,
+    role: UserRole,
+) -> None:
+    """Register user in database."""
+    params: UserCreateParams = {
+        "telegram_id": message.from_user.id,
+        "username": message.from_user.username,
+        "first_name": message.from_user.first_name,
+        "last_name": message.from_user.last_name,
+        "role": role,
+    }
+    await create_user(session=session, params=params)
+    update_params = _get_update_params(data, data.get("position", ""))
+    if update_params:
+        await update_user_profile(
+            session, message.from_user.id, params=update_params,
+        )
+
+
+@common_router.message(Command("menu"))
+async def cmd_menu(message: types.Message) -> None:
+    """Handle /menu command."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, message.from_user.id)
+        if user:
+            await message.answer(
+                "Главное меню:",
+                reply_markup=get_main_menu_keyboard(user.role),
+            )
+        else:
+            await message.answer(
+                "Сначала зарегистрируйтесь командой /start",
+            )
+
+
+@common_router.message(Command("help"))
+async def cmd_help(message: types.Message) -> None:
+    """Handle /help command."""
+    await message.answer(HELP_TEXT)
+
+
+@common_router.message(Command("profile"))
+async def cmd_profile(message: types.Message) -> None:
+    """Handle /profile command."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, message.from_user.id)
+        if not user:
+            await message.answer(
+                "Сначала зарегистрируйтесь командой /start",
+            )
+            return
+        profile_text = _build_profile_text(user)
+        await message.answer(
+            profile_text, reply_markup=get_profile_keyboard(),
+        )
+
+
+@common_router.callback_query(F.data == "profile")
+async def show_profile(callback: types.CallbackQuery) -> None:
+    """Show user profile."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, callback.from_user.id)
+        if not user:
+            await callback.answer(
+                "Сначала зарегистрируйтесь", show_alert=True,
+            )
+            return
+        profile_text = _build_profile_text(user)
+        await callback.message.edit_text(
+            profile_text, reply_markup=get_profile_keyboard(),
+        )
+
+
+@common_router.callback_query(F.data == "edit_profile")
+async def edit_profile(callback: types.CallbackQuery) -> None:
+    """Edit user profile."""
+    await callback.message.edit_text(
+        "Выберите поле для редактирования:",
+        reply_markup=get_edit_profile_keyboard(),
+    )
+
+
+@common_router.callback_query(F.data.startswith("edit_"))
+async def edit_field(
+    callback: types.CallbackQuery, state: FSMContext,
+) -> None:
+    """Edit specific profile field."""
+    field = callback.data.split("_")[1]
+    await state.update_data(edit_field=field)
+    field_name = FIELD_NAMES.get(field, field)
+    await callback.message.edit_text(
+        f"Введите новое значение для поля '{field_name}':",
+    )
+    await state.set_state(ProfileEdit.value)
+
+
+@common_router.message(ProfileEdit.value)
+async def save_profile_value(
+    message: types.Message, state: FSMContext,
+) -> None:
+    """Save profile field value."""
+    data = await state.get_data()
+    field = data.get("edit_field")
+    async for session in get_session():
+        params: UserUpdateParams = {
+            field: message.text,
+        }  # type: ignore[arg-type]
+        await update_user_profile(
+            session, message.from_user.id, params=params,
+        )
+    await message.answer(
+        "Профиль обновлен!",
+        reply_markup=get_back_keyboard("profile"),
+    )
+    await state.clear()
+
+
+@common_router.callback_query(F.data == "back_to_menu")
+async def back_to_menu(callback: types.CallbackQuery) -> None:
+    """Return to main menu."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, callback.from_user.id)
+        if user:
+            await callback.message.edit_text(
+                "Главное меню:",
+                reply_markup=get_main_menu_keyboard(user.role),
+            )
+
+
+@common_router.callback_query(F.data == "back_to_profile")
+async def back_to_profile(callback: types.CallbackQuery) -> None:
+    """Return to profile."""
+    await cmd_profile(callback.message)
+
+
+@common_router.callback_query(F.data == "cancel")
+async def cancel_action(
+    callback: types.CallbackQuery, state: FSMContext,
+) -> None:
+    """Cancel current action."""
+    await state.clear()
+    await callback.message.edit_text("Действие отменено.")
+    await cmd_menu(callback.message)

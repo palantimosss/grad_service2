@@ -1,0 +1,31 @@
+target-version = "py314" #-> можете здесь поменять
+line-length = 79
+fix = false
+cache-dir = "/tmp/ruff-cache"
+
+[lint]
+select = [
+  "ALL"
+]
+ignore = [
+   "RUF001",
+   "RUF002",
+   "RUF003",
+   "D101",
+   "D102",
+   "D103",
+   "D104",
+   "D105",
+   "D107",
+   "D100",
+   "ANN204",
+   "CPY001",
+   "PLR0904",
+   "S101",
+]
+
+[lint.mccabe]
+max-complexity = 5
+
+[lint.per-file-ignores]
+"**/migrations/*.py" = ["ALL"]
