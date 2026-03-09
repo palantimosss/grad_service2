@@ -29,7 +29,7 @@ from bot.handlers.manager._projects_helpers import (
     build_project_text,
     get_status_text,
 )
-from bot.keyboards.menus import (
+from bot.handlers.manager._projects_keyboards import (
     get_project_actions_keyboard,
     get_projects_keyboard,
     get_yes_no_keyboard,
