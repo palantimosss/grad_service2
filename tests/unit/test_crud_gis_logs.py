@@ -22,6 +22,7 @@ _TEST_MINUTE = 0
 _TEST_MEETING_TITLE = "Test Meeting"
 _TEST_ADDRESS = "Test Address"
 _TEST_COORDINATES = "30.3158,59.9391"
+_EXPECTED_LOGS_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -99,7 +100,7 @@ class TestGISLogCRUD:
         logs = await get_gis_logs_by_meeting_id(
             test_session, meeting.id,
         )
-        assert len(logs) == 2
+        assert len(logs) == _EXPECTED_LOGS_COUNT
 
     async def test_delete_gis_log(
         self,

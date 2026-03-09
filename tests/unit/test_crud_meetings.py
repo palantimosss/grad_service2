@@ -24,6 +24,7 @@ _TEST_MINUTE = 0
 
 # Test data constants
 _TEST_MEETING_TITLE = "Test Meeting"
+_EXPECTED_MEETINGS_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -111,7 +112,7 @@ class TestMeetingCRUD:
         meetings = await get_meetings_by_project_id(
             test_session, test_project.id,
         )
-        assert len(meetings) == 2
+        assert len(meetings) == _EXPECTED_MEETINGS_COUNT
 
     async def test_update_meeting_status(
         self,

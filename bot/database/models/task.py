@@ -1,12 +1,15 @@
 """Task model."""
 
-from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bot.database.models.base import Base
 from bot.database.models.enums import TaskStatus
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 # String length constants
 TITLE_MAX_LENGTH = 255

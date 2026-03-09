@@ -15,6 +15,7 @@ from bot.database.models.enums import DocumentType
 _TEST_FILE_PATH = "/files/test.pdf"
 _TEST_FILE_NAME = "test.pdf"
 _TEST_FILE_SIZE = 1024
+_EXPECTED_DOCS_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -89,7 +90,7 @@ class TestDocumentCRUD:
         docs = await get_documents_by_project_id(
             test_session, test_project.id,
         )
-        assert len(docs) == 2
+        assert len(docs) == _EXPECTED_DOCS_COUNT
 
     async def test_update_document(
         self,

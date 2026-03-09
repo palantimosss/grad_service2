@@ -80,7 +80,7 @@ def get_main_menu_keyboard(role: UserRole) -> InlineKeyboardMarkup:
             ("Создать проект", "create_project"),
             ("Профиль", "profile"),
         ])
-    elif role == UserRole.MANAGER:
+    if role == UserRole.MANAGER:
         return _build_single_column_keyboard([
             ("Все проекты", "all_projects"),
             ("Заявки", "pending_projects"),
@@ -89,12 +89,12 @@ def get_main_menu_keyboard(role: UserRole) -> InlineKeyboardMarkup:
             ("Статистика", "statistics"),
             ("Профиль", "profile"),
         ])
-    else:  # PERFORMER
-        return _build_single_column_keyboard([
-            ("Мои задачи", "my_tasks"),
-            ("Проекты", "projects"),
-            ("Профиль", "profile"),
-        ])
+    # PERFORMER
+    return _build_single_column_keyboard([
+        ("Мои задачи", "my_tasks"),
+        ("Проекты", "projects"),
+        ("Профиль", "profile"),
+    ])
 
 
 def get_profile_keyboard() -> InlineKeyboardMarkup:
@@ -138,7 +138,7 @@ def _get_project_action_buttons(
             ("Обратная связь", f"feedback_{project_id}"),
             (_BACK_TEXT, _BACK_MENU),
         ]
-    elif role == UserRole.MANAGER:
+    if role == UserRole.MANAGER:
         return [
             ("Создать задачу", f"create_task_{project_id}"),
             ("Создать этап", f"create_stage_{project_id}"),
@@ -146,11 +146,11 @@ def _get_project_action_buttons(
             ("Статус проекта", f"project_status_{project_id}"),
             (_BACK_TEXT, _BACK_MENU),
         ]
-    else:  # PERFORMER
-        return [
-            ("Загрузить документ", f"upload_doc_{project_id}"),
-            (_BACK_TEXT, _BACK_MENU),
-        ]
+    # PERFORMER
+    return [
+        ("Загрузить документ", f"upload_doc_{project_id}"),
+        (_BACK_TEXT, _BACK_MENU),
+    ]
 
 
 def get_project_actions_keyboard(

@@ -17,6 +17,10 @@ from bot.database.crud_modules.task_crud import create_task
 from bot.database.crud_modules.user_crud import create_user
 from bot.database.models.enums import ProjectStatus, TaskStatus, UserRole
 
+# Expected counts constants
+_EXPECTED_DRAFT_PROJECTS_COUNT = 2
+_EXPECTED_CLIENT_USERS_COUNT = 2
+
 
 async def _create_project_for_stats(
     session: object,
@@ -89,7 +93,7 @@ class TestStatisticsCRUD:
             test_session, test_user.id, ProjectStatus.REGISTERED,
         )
         stats = await get_projects_count_by_status(test_session)
-        assert stats[ProjectStatus.DRAFT] == 2
+        assert stats[ProjectStatus.DRAFT] == _EXPECTED_DRAFT_PROJECTS_COUNT
         assert stats[ProjectStatus.REGISTERED] == 1
 
     async def test_get_tasks_count_by_status(
@@ -123,7 +127,7 @@ class TestStatisticsCRUD:
             test_session, UserRole.MANAGER, 1000000003,
         )
         stats = await get_users_count_by_role(test_session)
-        assert stats[UserRole.CLIENT] == 2
+        assert stats[UserRole.CLIENT] == _EXPECTED_CLIENT_USERS_COUNT
         assert stats[UserRole.MANAGER] == 1
 
     async def test_get_total_projects_count(

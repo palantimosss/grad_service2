@@ -1,10 +1,14 @@
 """Notification model."""
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bot.database.models.base import Base
-from bot.database.models.enums import NotificationType
+
+if TYPE_CHECKING:
+    from bot.database.models.enums import NotificationType
 
 # String length constants
 TITLE_MAX_LENGTH = 255

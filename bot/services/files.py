@@ -1,6 +1,6 @@
 """Files service module."""
 
-import os
+from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
 from aiogram.types import FSInputFile
@@ -81,8 +81,9 @@ async def delete_document_service(
 
 def _delete_file(file_path: str) -> None:
     """Delete file from filesystem."""
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    path = Path(file_path)
+    if path.exists():
+        path.unlink()
 
 
 def get_document_file(document_path: str) -> FSInputFile:

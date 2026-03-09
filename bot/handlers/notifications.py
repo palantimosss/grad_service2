@@ -204,7 +204,7 @@ def _format_coordinates(coordinates: tuple) -> str:
     return f"{coordinates[0]},{coordinates[1]}"
 
 
-def _get_gis_status(is_inside: bool) -> str:
+def _get_gis_status(*, is_inside: bool) -> str:
     """Get GIS status string."""
     return "inside" if is_inside else "outside"
 
@@ -225,7 +225,7 @@ async def meeting_address(
     await state.update_data(
         address=address_val,
         coordinates=_format_coordinates(gis_result.coordinates),
-        gis_check_result=_get_gis_status(gis_result.inside_zone),
+        gis_check_result=_get_gis_status(is_inside=gis_result.inside_zone),
     )
     if not gis_result.inside_zone:
         await message.answer(

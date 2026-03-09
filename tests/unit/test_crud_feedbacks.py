@@ -12,6 +12,7 @@ from bot.database.crud_modules.feedback_crud import (
 # Test constants
 _TEST_FEEDBACK_MESSAGE = "Great project!"
 _TEST_RATING = 5
+_EXPECTED_FEEDBACKS_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -85,7 +86,7 @@ class TestFeedbackCRUD:
         feedbacks = await get_feedbacks_by_project_id(
             test_session, test_project.id,
         )
-        assert len(feedbacks) == 2
+        assert len(feedbacks) == _EXPECTED_FEEDBACKS_COUNT
 
     async def test_delete_feedback(
         self,

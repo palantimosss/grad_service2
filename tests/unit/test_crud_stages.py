@@ -21,6 +21,7 @@ _TEST_DAY_END = 1
 
 # Test data constants
 _TEST_STAGE_TITLE = "Design Phase"
+_EXPECTED_STAGES_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -111,7 +112,7 @@ class TestStageCRUD:
         stages = await get_stages_by_project_id(
             test_session, test_project.id,
         )
-        assert len(stages) == 2
+        assert len(stages) == _EXPECTED_STAGES_COUNT
 
     async def test_update_stage_status(
         self,

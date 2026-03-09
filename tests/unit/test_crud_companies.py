@@ -14,6 +14,7 @@ from bot.database.crud_modules.client_company_crud import (
 _TEST_COMPANY_NAME = "Test Company"
 _TEST_INN = "1234567890"
 _TEST_EMAIL = "test@company.com"
+_EXPECTED_COMPANIES_COUNT = 2
 
 
 @pytest.mark.asyncio
@@ -66,7 +67,7 @@ class TestClientCompanyCRUD:
             {"name": "Company 2"},
         )
         companies = await get_all_companies(test_session)
-        assert len(companies) == 2
+        assert len(companies) == _EXPECTED_COMPANIES_COUNT
 
     async def test_update_company(
         self,
