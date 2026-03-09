@@ -77,7 +77,7 @@ async def delete_document_service(
     if not doc:
         return False
 
-    await _delete_file(doc.file_path)
+    _delete_file(doc.file_path)
 
     return await delete_document_db(session, document_id)
 
