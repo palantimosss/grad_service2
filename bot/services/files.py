@@ -27,21 +27,21 @@ if TYPE_CHECKING:
 async def save_file(
     file_id: str,
     file_name: str,
-    bot: Bot,
+    bot_obj: Bot,
 ) -> str | None:
     """Save file from Telegram to local storage."""
-    file = await bot.get_file(file_id)
-    file_path = file.file_path
+    file_obj = await bot_obj.get_file(file_id)
+    file_path = file_obj.file_path
 
     dest_path = FILES_DIR / file_name
     dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-    await bot.download_file(file_path, dest_path)
+    await bot_obj.download_file(file_path, dest_path)
 
     return str(dest_path)
 
 
-async def create_document_service(  # noqa: PLR0913
+async def create_document_service(
     session: AsyncSession,
     project_id: int,
     file_path: str,
@@ -84,8 +84,8 @@ async def delete_document_service(
 
 def _delete_file(file_path: str) -> None:
     """Delete file from filesystem."""
-    if os.path.exists(file_path):  # noqa: PTH110
-        os.remove(file_path)  # noqa: PTH107
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 def get_document_file(document_path: str) -> FSInputFile:

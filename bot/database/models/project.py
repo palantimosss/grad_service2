@@ -1,15 +1,18 @@
 """Project model."""
 
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-if TYPE_CHECKING:
-    from datetime import datetime
-
 from bot.database.models.base import Base
 from bot.database.models.enums import ProjectStatus
+
+# String length constants
+TITLE_MAX_LENGTH = 255
+
+# Relationship cascade constants
+CASCADE_DELETE = "all, delete-orphan"
 
 
 class Project(Base):
@@ -17,7 +20,7 @@ class Project(Base):
 
     __tablename__ = "projects"
 
-    title: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(String(TITLE_MAX_LENGTH))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ProjectStatus] = mapped_column(
         default=ProjectStatus.DRAFT,
@@ -51,25 +54,25 @@ class Project(Base):
     tasks = relationship(
         "Task",
         back_populates="project",
-        cascade="all, delete-orphan",
+        cascade=CASCADE_DELETE,
     )
     stages = relationship(
         "ProjectStage",
         back_populates="project",
-        cascade="all, delete-orphan",
+        cascade=CASCADE_DELETE,
     )
     documents = relationship(
         "Document",
         back_populates="project",
-        cascade="all, delete-orphan",
+        cascade=CASCADE_DELETE,
     )
     meetings = relationship(
         "Meeting",
         back_populates="project",
-        cascade="all, delete-orphan",
+        cascade=CASCADE_DELETE,
     )
     feedbacks = relationship(
         "Feedback",
         back_populates="project",
-        cascade="all, delete-orphan",
+        cascade=CASCADE_DELETE,
     )

@@ -37,10 +37,10 @@ class MeetingServiceParams(TypedDict, total=False):
 
 async def create_meeting_service(
     session: AsyncSession,
-    params: MeetingServiceParams,
+    meeting_data: MeetingServiceParams,
 ) -> object | None:
     """Create a new meeting."""
-    return await create_meeting_db(session=session, params=params)
+    return await create_meeting_db(session=session, params=meeting_data)
 
 
 async def confirm_meeting_service(

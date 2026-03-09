@@ -15,6 +15,31 @@ from bot.database.models.enums import (
 if TYPE_CHECKING:
     from aiogram.types import InlineKeyboardMarkup
 
+# Button text constants
+_BACK_TEXT = "Назад"
+_CANCEL_TEXT = "Отмена"
+_YES_TEXT = "Да"
+_NO_TEXT = "Нет"
+
+# Callback data constants
+_BACK_MENU = "back_to_menu"
+_BACK_PROFILE = "back_to_profile"
+_BACK_PROJECT = "back_to_project"
+_BACK_TASKS = "back_to_tasks"
+_BACK_MEETINGS = "back_to_meetings"
+_BACK_DOCUMENTS = "back_to_documents"
+_BACK_NOTIFICATIONS = "back_to_notifications"
+
+
+def _adjust_single(builder: InlineKeyboardBuilder) -> None:
+    """Adjust builder to single column."""
+    builder.adjust(1)
+
+
+def _adjust_double(builder: InlineKeyboardBuilder) -> None:
+    """Adjust builder to double column."""
+    builder.adjust(2)
+
 
 def get_role_keyboard() -> InlineKeyboardMarkup:
     """Get role selection keyboard."""
@@ -22,7 +47,7 @@ def get_role_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="Клиент", callback_data="role_client")
     builder.button(text="Руководитель", callback_data="role_manager")
     builder.button(text="Исполнитель", callback_data="role_performer")
-    builder.adjust(1)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -46,7 +71,7 @@ def get_main_menu_keyboard(role: UserRole) -> InlineKeyboardMarkup:
         builder.button(text="Проекты", callback_data="projects")
         builder.button(text="Профиль", callback_data="profile")
 
-    builder.adjust(1)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -54,8 +79,8 @@ def get_profile_keyboard() -> InlineKeyboardMarkup:
     """Get profile keyboard."""
     builder = InlineKeyboardBuilder()
     builder.button(text="Редактировать", callback_data="edit_profile")
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(2)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
@@ -65,8 +90,8 @@ def get_edit_profile_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="Телефон", callback_data="edit_phone")
     builder.button(text="Email", callback_data="edit_email")
     builder.button(text="Должность", callback_data="edit_position")
-    builder.button(text="Назад", callback_data="back_to_profile")
-    builder.adjust(2)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_PROFILE)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
@@ -78,8 +103,8 @@ def get_projects_keyboard(projects: list) -> InlineKeyboardMarkup:
             text=f"📁 {project.title}",
             callback_data=f"project_{project.id}",
         )
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -121,8 +146,8 @@ def get_project_actions_keyboard(
             callback_data=f"upload_doc_{project_id}",
         )
 
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -134,8 +159,8 @@ def get_project_status_keyboard(project_id: int) -> InlineKeyboardMarkup:
             text=status.value.replace("_", " ").title(),
             callback_data=f"set_status_{project_id}_{status.value}",
         )
-    builder.button(text="Назад", callback_data="back_to_project")
-    builder.adjust(2)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_PROJECT)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
@@ -148,8 +173,8 @@ def get_tasks_keyboard(tasks: list) -> InlineKeyboardMarkup:
             text=f"{emoji} {task.title}",
             callback_data=f"task_{task.id}",
         )
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -174,8 +199,8 @@ def get_task_actions_keyboard(
         text="Загрузить документ",
         callback_data=f"upload_doc_task_{task_id}",
     )
-    builder.button(text="Назад", callback_data="back_to_tasks")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_TASKS)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -190,8 +215,8 @@ def get_documents_keyboard(
             callback_data=f"doc_{doc.id}",
         )
     back_callback = f"task_{task_id}" if task_id else f"project_{project_id}"
-    builder.button(text="Назад", callback_data=back_callback)
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=back_callback)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -210,8 +235,8 @@ def get_document_download_keyboard(
             text="Удалить",
             callback_data=f"delete_doc_{document_id}",
         )
-    builder.button(text="Назад", callback_data="back_to_documents")
-    builder.adjust(2)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_DOCUMENTS)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
@@ -223,7 +248,7 @@ def get_document_type_keyboard() -> InlineKeyboardMarkup:
             text=doc_type.value.replace("_", " ").title(),
             callback_data=f"doc_type_{doc_type.value}",
         )
-    builder.adjust(2)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
@@ -231,20 +256,25 @@ def get_meetings_keyboard(meetings: list) -> InlineKeyboardMarkup:
     """Get meetings list keyboard."""
     builder = InlineKeyboardBuilder()
     for meeting in meetings:
-        status_emoji = {
-            MeetingStatus.PENDING: "⏳",
-            MeetingStatus.CONFIRMED: "✅",
-            MeetingStatus.CANCELLED: "❌",
-            MeetingStatus.COMPLETED: "✔️",
-        }
-        emoji = status_emoji.get(meeting.status, "📅")
+        emoji = _get_meeting_emoji(meeting.status)
         builder.button(
             text=f"{emoji} {meeting.title}",
             callback_data=f"meeting_{meeting.id}",
         )
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_single(builder)
     return builder.as_markup()
+
+
+def _get_meeting_emoji(status: MeetingStatus) -> str:
+    """Get emoji for meeting status."""
+    status_emoji = {
+        MeetingStatus.PENDING: "⏳",
+        MeetingStatus.CONFIRMED: "✅",
+        MeetingStatus.CANCELLED: "❌",
+        MeetingStatus.COMPLETED: "✔️",
+    }
+    return status_emoji.get(status, "📅")
 
 
 def get_meeting_response_keyboard(
@@ -260,24 +290,24 @@ def get_meeting_response_keyboard(
         text="Отклонить",
         callback_data=f"meeting_decline_{meeting_id}",
     )
-    builder.button(text="Назад", callback_data="back_to_meetings")
-    builder.adjust(2)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MEETINGS)
+    _adjust_double(builder)
     return builder.as_markup()
 
 
 def get_yes_no_keyboard() -> InlineKeyboardMarkup:
     """Get yes/no keyboard."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Да", callback_data="yes")
-    builder.button(text="Нет", callback_data="no")
-    builder.adjust(2)
+    builder.button(text=_YES_TEXT, callback_data="yes")
+    builder.button(text=_NO_TEXT, callback_data="no")
+    _adjust_double(builder)
     return builder.as_markup()
 
 
 def get_cancel_keyboard() -> InlineKeyboardMarkup:
     """Get cancel keyboard."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Отмена", callback_data="cancel")
+    builder.button(text=_CANCEL_TEXT, callback_data="cancel")
     return builder.as_markup()
 
 
@@ -290,8 +320,8 @@ def get_clients_keyboard(companies: list) -> InlineKeyboardMarkup:
             callback_data=f"client_{company.id}",
         )
     builder.button(text="Добавить клиента", callback_data="add_client")
-    builder.button(text="Назад", callback_data="back_to_menu")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
@@ -304,13 +334,15 @@ def get_notification_keyboard(
         text="Отметить прочитанным",
         callback_data=f"notif_read_{notification_id}",
     )
-    builder.button(text="Назад", callback_data="back_to_notifications")
-    builder.adjust(1)
+    builder.button(text=_BACK_TEXT, callback_data=_BACK_NOTIFICATIONS)
+    _adjust_single(builder)
     return builder.as_markup()
 
 
-def get_back_keyboard(callback: str = "back_to_menu") -> InlineKeyboardMarkup:
+def get_back_keyboard(
+    callback: str = _BACK_MENU,
+) -> InlineKeyboardMarkup:
     """Get simple back keyboard."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Назад", callback_data=callback)
+    builder.button(text=_BACK_TEXT, callback_data=callback)
     return builder.as_markup()

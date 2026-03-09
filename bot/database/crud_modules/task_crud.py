@@ -30,47 +30,47 @@ async def get_task_by_id(
     session: AsyncSession, task_id: int,
 ) -> Task | None:
     """Get task by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Task).where(Task.id == task_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_tasks_by_project_id(
     session: AsyncSession, project_id: int,
 ) -> list[Task]:
     """Get tasks by project ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Task).where(Task.project_id == project_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def get_tasks_by_performer_id(
     session: AsyncSession, performer_id: int,
 ) -> list[Task]:
     """Get tasks by performer ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Task).where(Task.performer_id == performer_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def get_tasks_by_status(
     session: AsyncSession, status: TaskStatus,
 ) -> list[Task]:
     """Get tasks by status."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Task).where(Task.status == status),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def create_task(
-    session: AsyncSession, params: TaskCreateParams,
+    session: AsyncSession, task_data: TaskCreateParams,
 ) -> Task:
     """Create a new task."""
-    task = Task(**params)
+    task = Task(**task_data)
     session.add(task)
     await session.commit()
     await session.refresh(task)
@@ -111,20 +111,22 @@ async def delete_task(
     session: AsyncSession, task_id: int,
 ) -> bool:
     """Delete task by ID."""
-    result = await session.execute(delete(Task).where(Task.id == task_id))
+    query_result = await session.execute(
+        delete(Task).where(Task.id == task_id),
+    )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0
 
 
 async def get_pending_tasks(session: AsyncSession) -> list[Task]:
     """Get pending tasks."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Task).where(Task.status == TaskStatus.PENDING),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def get_all_tasks(session: AsyncSession) -> list[Task]:
     """Get all tasks."""
-    result = await session.execute(select(Task))
-    return list(result.scalars().all())
+    query_result = await session.execute(select(Task))
+    return list(query_result.scalars().all())

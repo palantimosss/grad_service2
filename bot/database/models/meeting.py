@@ -1,15 +1,19 @@
 """Meeting and MeetingParticipant models."""
 
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-if TYPE_CHECKING:
-    from datetime import datetime
-
 from bot.database.models.base import Base
 from bot.database.models.enums import MeetingParticipantStatus, MeetingStatus
+
+# String length constants
+TITLE_MAX_LENGTH = 255
+ADDRESS_MAX_LENGTH = 500
+COORDINATES_MAX_LENGTH = 100
+ONLINE_LINK_MAX_LENGTH = 500
+GIS_RESULT_MAX_LENGTH = 50
 
 
 class Meeting(Base):
@@ -18,7 +22,7 @@ class Meeting(Base):
     __tablename__ = "meetings"
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
-    title: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(String(TITLE_MAX_LENGTH))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     organizer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     scheduled_at: Mapped[datetime]
@@ -26,18 +30,19 @@ class Meeting(Base):
     status: Mapped[MeetingStatus] = mapped_column(
         default=MeetingStatus.PENDING,
     )
-    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    address: Mapped[str | None] = mapped_column(
+        String(ADDRESS_MAX_LENGTH), nullable=True,
+    )
     coordinates: Mapped[str | None] = mapped_column(
-        String(100),
+        String(COORDINATES_MAX_LENGTH),
         nullable=True,
     )
     is_online: Mapped[bool] = mapped_column(Boolean, default=False)
     online_link: Mapped[str | None] = mapped_column(
-        String(500),
-        nullable=True,
+        String(ONLINE_LINK_MAX_LENGTH), nullable=True,
     )
     gis_check_result: Mapped[str | None] = mapped_column(
-        String(50),
+        String(GIS_RESULT_MAX_LENGTH),
         nullable=True,
     )
 

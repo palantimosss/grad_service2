@@ -1,14 +1,15 @@
 """GIS check log model."""
 
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-if TYPE_CHECKING:
-    from datetime import datetime
-
 from bot.database.models.base import Base
+
+# String length constants
+ADDRESS_MAX_LENGTH = 500
+COORDINATES_MAX_LENGTH = 100
 
 
 class GISCheckLog(Base):
@@ -17,9 +18,9 @@ class GISCheckLog(Base):
     __tablename__ = "gis_check_logs"
 
     meeting_id: Mapped[int] = mapped_column(ForeignKey("meetings.id"))
-    address: Mapped[str] = mapped_column(String(500))
+    address: Mapped[str] = mapped_column(String(ADDRESS_MAX_LENGTH))
     coordinates: Mapped[str | None] = mapped_column(
-        String(100),
+        String(COORDINATES_MAX_LENGTH),
         nullable=True,
     )
     inside_zone: Mapped[bool]

@@ -31,11 +31,17 @@ logger = logging.getLogger(__name__)
 
 common_router = Router()
 
-FIELD_NAMES = {
+# Field name mappings for profile editing
+_FIELD_NAMES = {
     "phone": "телефон",
     "email": "email",
     "position": "должность",
 }
+
+# Field keys
+_PHONE_KEY = "phone"
+_EMAIL_KEY = "email"
+_POSITION_KEY = "position"
 
 HELP_TEXT = (
     "<b>Grad Service - Управление проектами</b>\n\n"
@@ -51,30 +57,35 @@ HELP_TEXT = (
 def _build_profile_text(user: object) -> str:
     """Build profile text from user object."""
     last = user.last_name or ""
-    phone = user.phone or "Не указан"
-    email = user.email or "Не указан"
-    position = user.position or "Не указана"
+    phone_val = user.phone or "Не указан"
+    email_val = user.email or "Не указан"
+    position_val = user.position or "Не указана"
+    phone_label = "Телефон"
+    email_label = "Email"
+    position_label = "Должность"
     lines = [
         "<b>Профиль</b>",
         "",
         f"Имя: {user.first_name} {last}",
         f"Роль: {user.role.value}",
-        f"Телефон: {phone}",
-        f"Email: {email}",
-        f"Должность: {position}",
+        f"{phone_label}: {phone_val}",
+        f"{email_label}: {email_val}",
+        f"{position_label}: {position_val}",
     ]
     return "\n".join(lines)
 
 
-def _get_update_params(data: dict, position: str) -> UserUpdateParams:
+def _get_update_params(
+    profile_data: dict, position_val: str,
+) -> UserUpdateParams:
     """Get user update params from data."""
     params: UserUpdateParams = {}
-    if data.get("phone"):
-        params["phone"] = data["phone"]
-    if data.get("email"):
-        params["email"] = data["email"]
-    if position and position != "пропустить":
-        params["position"] = position
+    if profile_data.get(_PHONE_KEY):
+        params[_PHONE_KEY] = profile_data[_PHONE_KEY]
+    if profile_data.get(_EMAIL_KEY):
+        params[_EMAIL_KEY] = profile_data[_EMAIL_KEY]
+    if position_val and position_val != "пропустить":
+        params[_POSITION_KEY] = position_val
     return params
 
 
@@ -142,12 +153,12 @@ async def process_position(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process position input."""
-    position = message.text
-    await state.update_data(position=position)
-    data = await state.get_data()
-    role = data.get("role", UserRole.CLIENT)
+    position_val = message.text
+    await state.update_data(position=position_val)
+    reg_data = await state.get_data()
+    role = reg_data.get("role", UserRole.CLIENT)
     async for session in get_session():
-        await _register_user(session, message, data, role)
+        await _register_user(session, message, reg_data, role)
     await message.answer(
         "Регистрация завершена!",
         reply_markup=get_main_menu_keyboard(role),
@@ -158,19 +169,19 @@ async def process_position(
 async def _register_user(
     session: object,
     message: types.Message,
-    data: dict,
+    reg_data: dict,
     role: UserRole,
 ) -> None:
     """Register user in database."""
-    params: UserCreateParams = {
+    create_params: UserCreateParams = {
         "telegram_id": message.from_user.id,
         "username": message.from_user.username,
         "first_name": message.from_user.first_name,
         "last_name": message.from_user.last_name,
         "role": role,
     }
-    await create_user(session=session, params=params)
-    update_params = _get_update_params(data, data.get("position", ""))
+    await create_user(session=session, params=create_params)
+    update_params = _get_update_params(reg_data, reg_data.get("position", ""))
     if update_params:
         await update_user_profile(
             session, message.from_user.id, params=update_params,
@@ -247,26 +258,26 @@ async def edit_field(
     """Edit specific profile field."""
     field = callback.data.split("_")[1]
     await state.update_data(edit_field=field)
-    field_name = FIELD_NAMES.get(field, field)
+    field_name = _FIELD_NAMES.get(field, field)
     await callback.message.edit_text(
         f"Введите новое значение для поля '{field_name}':",
     )
-    await state.set_state(ProfileEdit.value)
+    await state.set_state(ProfileEdit.field_value)
 
 
-@common_router.message(ProfileEdit.value)
+@common_router.message(ProfileEdit.field_value)
 async def save_profile_value(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Save profile field value."""
-    data = await state.get_data()
-    field = data.get("edit_field")
+    edit_data = await state.get_data()
+    field = edit_data.get("edit_field")
     async for session in get_session():
-        params: UserUpdateParams = {
+        update_params: UserUpdateParams = {
             field: message.text,
         }  # type: ignore[arg-type]
         await update_user_profile(
-            session, message.from_user.id, params=params,
+            session, message.from_user.id, params=update_params,
         )
     await message.answer(
         "Профиль обновлен!",

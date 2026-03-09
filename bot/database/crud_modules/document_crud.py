@@ -29,37 +29,37 @@ async def get_document_by_id(
     session: AsyncSession, document_id: int,
 ) -> Document | None:
     """Get document by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Document).where(Document.id == document_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_documents_by_project_id(
     session: AsyncSession, project_id: int,
 ) -> list[Document]:
     """Get documents by project ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Document).where(Document.project_id == project_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def get_documents_by_task_id(
     session: AsyncSession, task_id: int,
 ) -> list[Document]:
     """Get documents by task ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Document).where(Document.task_id == task_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def create_document(
-    session: AsyncSession, params: DocumentCreateParams,
+    session: AsyncSession, document_data: DocumentCreateParams,
 ) -> Document:
     """Create a new document."""
-    document = Document(**params)
+    document = Document(**document_data)
     session.add(document)
     await session.commit()
     await session.refresh(document)
@@ -69,11 +69,13 @@ async def create_document(
 async def update_document(
     session: AsyncSession,
     document_id: int,
-    params: DocumentCreateParams,
+    document_data: DocumentCreateParams,
 ) -> Document | None:
     """Update document fields."""
     await session.execute(
-        update(Document).where(Document.id == document_id).values(**params),
+        update(Document)
+        .where(Document.id == document_id)
+        .values(**document_data),
     )
     await session.commit()
     return await get_document_by_id(session, document_id)
@@ -83,8 +85,8 @@ async def delete_document(
     session: AsyncSession, document_id: int,
 ) -> bool:
     """Delete document by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(Document).where(Document.id == document_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0

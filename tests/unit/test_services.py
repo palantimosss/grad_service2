@@ -55,6 +55,30 @@ EXPECTED_DEADLINE_MAX_HOURS = 25
 EXPECTED_DEADLINE_MIN_HOURS = 23
 EXPECTED_HOUR_SECONDS = 3600
 
+# Test date constants
+TEST_MEETING_YEAR = 2026
+TEST_MEETING_MONTH = 12
+TEST_MEETING_DAY = 31
+TEST_MEETING_HOUR = 10
+TEST_STAGE_YEAR = 2026
+TEST_STAGE_MONTH_START = 1
+TEST_STAGE_DAY_START = 1
+TEST_STAGE_MONTH_END = 2
+TEST_STAGE_DAY_END = 1
+
+# Field key constants
+_PROJECT_ID_KEY = "project_id"
+_TITLE_KEY = "title"
+_ORGANIZER_ID_KEY = "organizer_id"
+_SCHEDULED_AT_KEY = "scheduled_at"
+_ORDER_KEY = "order"
+_PLANNED_START_KEY = "planned_start"
+_PLANNED_END_KEY = "planned_end"
+
+# Test data constants
+TEST_MEETING_TITLE = "Service Meeting"
+TEST_STAGE_TITLE = "Service Stage"
+
 
 @pytest.mark.asyncio
 class TestBotFactory:
@@ -145,10 +169,13 @@ class TestCalendarService:
         meeting = await create_meeting_service(
             session=test_session,
             params={
-                "project_id": test_project.id,
-                "title": "Service Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_MEETING_YEAR, TEST_MEETING_MONTH, TEST_MEETING_DAY,
+                    TEST_MEETING_HOUR, 0, tzinfo=UTC,
+                ),
             },
         )
         assert meeting is not None
@@ -163,10 +190,13 @@ class TestCalendarService:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_MEETING_YEAR, TEST_MEETING_MONTH, TEST_MEETING_DAY,
+                    TEST_MEETING_HOUR, 0, tzinfo=UTC,
+                ),
             },
         )
         confirmed = await confirm_meeting_service(test_session, meeting.id)
@@ -182,10 +212,13 @@ class TestCalendarService:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_MEETING_YEAR, TEST_MEETING_MONTH, TEST_MEETING_DAY,
+                    TEST_MEETING_HOUR, 0, tzinfo=UTC,
+                ),
             },
         )
         cancelled = await cancel_meeting_service(test_session, meeting.id)
@@ -201,10 +234,13 @@ class TestCalendarService:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_MEETING_YEAR, TEST_MEETING_MONTH, TEST_MEETING_DAY,
+                    TEST_MEETING_HOUR, 0, tzinfo=UTC,
+                ),
             },
         )
         completed = await complete_meeting_service(test_session, meeting.id)
@@ -220,10 +256,13 @@ class TestCalendarService:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_MEETING_YEAR, TEST_MEETING_MONTH, TEST_MEETING_DAY,
+                    TEST_MEETING_HOUR, 0, tzinfo=UTC,
+                ),
             },
         )
         participant = await add_participant_service(
@@ -303,15 +342,25 @@ class TestStageService:
         stage = await create_stage_service(
             session=test_session,
             params={
-                "project_id": test_project.id,
-                "title": "Service Stage",
-                "order": 1,
-                "planned_start": datetime(2026, 1, 1, tzinfo=UTC),
-                "planned_end": datetime(2026, 2, 1, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(
+                    TEST_STAGE_YEAR,
+                    TEST_STAGE_MONTH_START,
+                    TEST_STAGE_DAY_START,
+                    tzinfo=UTC,
+                ),
+                _PLANNED_END_KEY: datetime(
+                    TEST_STAGE_YEAR,
+                    TEST_STAGE_MONTH_END,
+                    TEST_STAGE_DAY_END,
+                    tzinfo=UTC,
+                ),
             },
         )
         assert stage is not None
-        assert stage.title == "Service Stage"
+        assert stage.title == TEST_STAGE_TITLE
 
 
 class TestMiddleware:
@@ -320,104 +369,104 @@ class TestMiddleware:
     async def test_logging_middleware_message(self) -> None:
         """Test logging middleware with message."""
         middleware = LoggingMiddleware()
-        mock_handler = AsyncMock(return_value="result")
+        mock_handler = AsyncMock(return_value="response")
 
         mock_message = MagicMock()
         mock_message.text = "Test message"
         mock_message.from_user.username = "testuser"
 
-        data: dict = {}
+        handler_data: dict = {}
 
-        result = await middleware(mock_handler, mock_message, data)
-        assert result == "result"
+        response = await middleware(mock_handler, mock_message, handler_data)
+        assert response == "response"
 
     async def test_logging_middleware_callback(self) -> None:
         """Test logging middleware with callback."""
         middleware = LoggingMiddleware()
-        mock_handler = AsyncMock(return_value="result")
+        mock_handler = AsyncMock(return_value="response")
 
         mock_callback = MagicMock()
         mock_callback.data = "callback_data"
         mock_callback.from_user.username = "testuser"
 
-        data: dict = {}
+        handler_data: dict = {}
 
-        result = await middleware(mock_handler, mock_callback, data)
-        assert result == "result"
+        response = await middleware(mock_handler, mock_callback, handler_data)
+        assert response == "response"
 
 
 class TestStates:
     """Tests for FSM states."""
 
+    def _assert_state_has_attributes(
+        self, state_class: object, attributes: list[str],
+    ) -> None:
+        """Assert state class has expected attributes."""
+        for attr in attributes:
+            assert hasattr(state_class, attr)
+
     def test_user_registration_states(self) -> None:
         """Test UserRegistration states."""
-        assert hasattr(UserRegistration, "role")
-        assert hasattr(UserRegistration, "phone")
-        assert hasattr(UserRegistration, "email")
-        assert hasattr(UserRegistration, "position")
-        assert hasattr(UserRegistration, "consent")
+        self._assert_state_has_attributes(
+            UserRegistration,
+            ["role", "phone", "email", "position", "consent"],
+        )
 
     def test_profile_edit_states(self) -> None:
         """Test ProfileEdit states."""
-        assert hasattr(ProfileEdit, "field")
-        assert hasattr(ProfileEdit, "value")
+        self._assert_state_has_attributes(
+            ProfileEdit, ["field", "value"],
+        )
 
     def test_project_creation_states(self) -> None:
         """Test ProjectCreation states."""
-        assert hasattr(ProjectCreation, "title")
-        assert hasattr(ProjectCreation, "description")
-        assert hasattr(ProjectCreation, "deadline")
-        assert hasattr(ProjectCreation, "budget")
+        self._assert_state_has_attributes(
+            ProjectCreation, ["title", "description", "deadline", "budget"],
+        )
 
     def test_task_creation_states(self) -> None:
         """Test TaskCreation states."""
-        assert hasattr(TaskCreation, "title")
-        assert hasattr(TaskCreation, "description")
-        assert hasattr(TaskCreation, "performer")
-        assert hasattr(TaskCreation, "deadline")
-        assert hasattr(TaskCreation, "priority")
+        self._assert_state_has_attributes(
+            TaskCreation,
+            ["title", "description", "performer", "deadline", "priority"],
+        )
 
     def test_stage_creation_states(self) -> None:
         """Test StageCreation states."""
-        assert hasattr(StageCreation, "title")
-        assert hasattr(StageCreation, "description")
-        assert hasattr(StageCreation, "planned_start")
-        assert hasattr(StageCreation, "planned_end")
-        assert hasattr(StageCreation, "order")
+        self._assert_state_has_attributes(
+            StageCreation,
+            ["title", "description", "planned_start", "planned_end", "order"],
+        )
 
     def test_meeting_creation_states(self) -> None:
         """Test MeetingCreation states."""
-        assert hasattr(MeetingCreation, "title")
-        assert hasattr(MeetingCreation, "description")
-        assert hasattr(MeetingCreation, "scheduled_at")
-        assert hasattr(MeetingCreation, "duration")
-        assert hasattr(MeetingCreation, "format_type")
-        assert hasattr(MeetingCreation, "address")
-        assert hasattr(MeetingCreation, "online_link")
+        self._assert_state_has_attributes(
+            MeetingCreation,
+            [
+                "title", "description", "scheduled_at", "duration",
+                "format_type", "address", "online_link",
+            ],
+        )
 
     def test_document_upload_states(self) -> None:
         """Test DocumentUpload states."""
-        assert hasattr(DocumentUpload, "project")
-        assert hasattr(DocumentUpload, "task")
-        assert hasattr(DocumentUpload, "document_type")
-        assert hasattr(DocumentUpload, "description")
-        assert hasattr(DocumentUpload, "file")
+        self._assert_state_has_attributes(
+            DocumentUpload,
+            ["project", "task", "document_type", "description", "file"],
+        )
 
     def test_feedback_creation_states(self) -> None:
         """Test FeedbackCreation states."""
-        assert hasattr(FeedbackCreation, "project")
-        assert hasattr(FeedbackCreation, "message")
-        assert hasattr(FeedbackCreation, "rating")
+        self._assert_state_has_attributes(
+            FeedbackCreation, ["project", "message", "rating"],
+        )
 
     def test_company_creation_states(self) -> None:
         """Test CompanyCreation states."""
-        assert hasattr(CompanyCreation, "name")
-        assert hasattr(CompanyCreation, "inn")
-        assert hasattr(CompanyCreation, "kpp")
-        assert hasattr(CompanyCreation, "address")
-        assert hasattr(CompanyCreation, "phone")
-        assert hasattr(CompanyCreation, "email")
-        assert hasattr(CompanyCreation, "website")
+        self._assert_state_has_attributes(
+            CompanyCreation,
+            ["name", "inn", "kpp", "address", "phone", "email", "website"],
+        )
 
 
 class TestConfig:

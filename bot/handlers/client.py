@@ -37,7 +37,8 @@ logger = logging.getLogger(__name__)
 
 client_router = Router()
 
-STATUS_MAP = {
+# Status map for display
+_STATUS_MAP = {
     "draft": "Черновик",
     "pending": "На регистрации",
     "registered": "Зарегистрирован",
@@ -47,10 +48,13 @@ STATUS_MAP = {
     "archived": "Архив",
 }
 
+# Skip option text
+_SKIP_OPTION = "пропустить"
+
 
 def _parse_deadline(text: str) -> datetime | None:
     """Parse deadline from text."""
-    if text == "пропустить":
+    if text == _SKIP_OPTION:
         return None
     try:
         return datetime.strptime(text, "%d.%m.%Y %H:%M").replace(
@@ -62,7 +66,7 @@ def _parse_deadline(text: str) -> datetime | None:
 
 def _parse_budget(text: str) -> float | None:
     """Parse budget from text."""
-    if text == "пропустить":
+    if text == _SKIP_OPTION:
         return None
     try:
         return float(text.replace(",", "."))
@@ -71,21 +75,21 @@ def _parse_budget(text: str) -> float | None:
 
 
 def _build_project_params(
-    data: dict,
+    project_data: dict,
     user_id: int,
 ) -> ProjectCreateParams:
     """Build project creation params."""
     params: ProjectCreateParams = {
-        "title": data["title"],
+        "title": project_data["title"],
         "client_id": user_id,
         "status": ProjectStatus.PENDING,
     }
-    if data.get("description"):
-        params["description"] = data["description"]
-    if data.get("deadline"):
-        params["deadline"] = data["deadline"]
-    if data.get("budget") is not None:
-        params["budget"] = data["budget"]
+    if project_data.get("description"):
+        params["description"] = project_data["description"]
+    if project_data.get("deadline"):
+        params["deadline"] = project_data["deadline"]
+    if project_data.get("budget") is not None:
+        params["budget"] = project_data["budget"]
     return params
 
 
@@ -98,6 +102,7 @@ async def my_projects(callback: types.CallbackQuery) -> None:
             await callback.answer("Сначала зарегистрируйтесь", show_alert=True)
             return
         projects = await get_projects_by_client_id(session, user.id)
+
         if not projects:
             await callback.message.edit_text(
                 "У вас пока нет проектов.\nСоздайте новый проект:",
@@ -124,7 +129,9 @@ async def create_project_start(
 async def project_title(message: types.Message, state: FSMContext) -> None:
     """Process project title."""
     await state.update_data(title=message.text)
-    await message.answer("Введите описание проекта (или 'пропустить'):")
+    await message.answer(
+        f"Введите описание проекта (или '{_SKIP_OPTION}'):",
+    )
     await state.set_state(ProjectCreation.description)
 
 
@@ -134,12 +141,12 @@ async def project_description(
 ) -> None:
     """Process project description."""
     desc: str | None = None
-    if message.text != "пропустить":
+    if message.text != _SKIP_OPTION:
         desc = message.text
     await state.update_data(description=desc)
     await message.answer(
         "Введите дедлайн в формате ДД.ММ.ГГГГ ЧЧ:ММ "
-        "(или 'пропустить'):",
+        f"(или '{_SKIP_OPTION}'):",
     )
     await state.set_state(ProjectCreation.deadline)
 
@@ -150,13 +157,14 @@ async def project_deadline(
 ) -> None:
     """Process project deadline."""
     deadline = _parse_deadline(message.text)
-    if deadline is None and message.text != "пропустить":
+    if deadline is None and message.text != _SKIP_OPTION:
         await message.answer(
-            "Неверный формат. Попробуйте снова или 'пропустить':",
+            "Неверный формат. Попробуйте снова или "
+            f"'{_SKIP_OPTION}':",
         )
         return
     await state.update_data(deadline=deadline)
-    await message.answer("Введите бюджет (или 'пропустить'):")
+    await message.answer(f"Введите бюджет (или '{_SKIP_OPTION}'):")
     await state.set_state(ProjectCreation.budget)
 
 
@@ -166,16 +174,17 @@ async def project_budget(
 ) -> None:
     """Process project budget."""
     budget = _parse_budget(message.text)
-    if budget is None and message.text != "пропустить":
+    if budget is None and message.text != _SKIP_OPTION:
         await message.answer(
-            "Неверный формат. Попробуйте снова или 'пропустить':",
+            "Неверный формат. Попробуйте снова или "
+            f"'{_SKIP_OPTION}':",
         )
         return
     await state.update_data(budget=budget)
-    data = await state.get_data()
+    project_data = await state.get_data()
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        params = _build_project_params(data, user.id)
+        params = _build_project_params(project_data, user.id)
         await create_project(session=session, params=params)
     await message.answer(
         "Проект создан и отправлен на регистрацию!",
@@ -194,16 +203,20 @@ async def project_detail(callback: types.CallbackQuery) -> None:
         if not project:
             await callback.answer("Проект не найден", show_alert=True)
             return
-        status_text = STATUS_MAP.get(
+        status_text = _STATUS_MAP.get(
             project.status.value, project.status.value,
         )
+        status_label = "Статус"
+        desc_label = "Описание"
+        deadline_label = "Дедлайн"
+        budget_label = "Бюджет"
         lines = [
             f"<b>{project.title}</b>",
             "",
-            f"Статус: {status_text}",
-            f"Описание: {project.description or 'Нет'}",
-            f"Дедлайн: {project.deadline or 'Не установлен'}",
-            f"Бюджет: {project.budget or 'Не указан'}",
+            f"{status_label}: {status_text}",
+            f"{desc_label}: {project.description or 'Нет'}",
+            f"{deadline_label}: {project.deadline or 'Не установлен'}",
+            f"{budget_label}: {project.budget or 'Не указан'}",
         ]
         text = "\n".join(lines)
         await callback.message.edit_text(
@@ -220,28 +233,28 @@ async def upload_doc_start(
     project_id = int(callback.data.split("_")[2])
     await state.update_data(project_id=project_id)
     await callback.message.edit_text("Отправьте файл для загрузки:")
-    await state.set_state(DocumentUpload.file)
+    await state.set_state(DocumentUpload.document_file)
 
 
-@client_router.message(DocumentUpload.file, F.document)
+@client_router.message(DocumentUpload.document_file, F.document)
 async def upload_doc_file(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process document file."""
-    data = await state.get_data()
-    project_id = data.get("project_id")
-    file = message.document
-    file_name = file.file_name
+    state_data = await state.get_data()
+    project_id = state_data.get("project_id")
+    document_file = message.document
+    file_name = document_file.file_name
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        file_path_obj = await message.bot.get_file(file.file_id)
+        file_path_obj = await message.bot.get_file(document_file.file_id)
         dest = f"data/files/{project_id}_{file_name}"
         await message.bot.download_file(file_path_obj.file_path, dest)
         params: DocumentCreateParams = {
             "project_id": project_id,
             "file_path": dest,
             "file_name": file_name,
-            "file_size": file.file_size,
+            "file_size": document_file.file_size,
             "document_type": DocumentType.SOURCE,
             "uploaded_by": user.id,
         }
@@ -269,8 +282,8 @@ async def feedback_message(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process feedback message."""
-    data = await state.get_data()
-    project_id = data.get("project_id")
+    state_data = await state.get_data()
+    project_id = state_data.get("project_id")
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
         params: FeedbackCreateParams = {

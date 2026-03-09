@@ -23,27 +23,27 @@ async def get_feedback_by_id(
     session: AsyncSession, feedback_id: int,
 ) -> Feedback | None:
     """Get feedback by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Feedback).where(Feedback.id == feedback_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_feedbacks_by_project_id(
     session: AsyncSession, project_id: int,
 ) -> list[Feedback]:
     """Get feedbacks by project ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Feedback).where(Feedback.project_id == project_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def create_feedback(
-    session: AsyncSession, params: FeedbackCreateParams,
+    session: AsyncSession, feedback_data: FeedbackCreateParams,
 ) -> Feedback:
     """Create a new feedback."""
-    feedback = Feedback(**params)
+    feedback = Feedback(**feedback_data)
     session.add(feedback)
     await session.commit()
     await session.refresh(feedback)
@@ -54,8 +54,8 @@ async def delete_feedback(
     session: AsyncSession, feedback_id: int,
 ) -> bool:
     """Delete feedback by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(Feedback).where(Feedback.id == feedback_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0

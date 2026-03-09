@@ -13,9 +13,12 @@ FILES_DIR = DATA_DIR / "files"
 DATABASE_PATH = DATA_DIR / "grad_service.db"
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-ADMIN_IDS = [
-    int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()
-]
+ADMIN_IDS_RAW = os.getenv("ADMIN_IDS", "")
+ADMIN_IDS = tuple(
+    int(admin_id.strip())
+    for admin_id in ADMIN_IDS_RAW.split(",")
+    if admin_id.strip()
+)
 YANDEX_GEOCODER_API_KEY = os.getenv("YANDEX_GEOCODER_API_KEY", "")
 
 HOUR_SECONDS = 3600

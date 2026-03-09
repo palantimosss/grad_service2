@@ -2,6 +2,13 @@
 
 from enum import StrEnum
 
+# Common string values for enums
+_PENDING = "pending"
+_IN_PROGRESS = "in_progress"
+_COMPLETED = "completed"
+_CANCELLED = "cancelled"
+_CONFIRMED = "confirmed"
+
 
 class UserRole(StrEnum):
     """User roles in the system."""
@@ -15,22 +22,22 @@ class ProjectStatus(StrEnum):
     """Project status values."""
 
     DRAFT = "draft"
-    PENDING = "pending"
+    PENDING = _PENDING
     REGISTERED = "registered"
-    IN_PROGRESS = "in_progress"
+    IN_PROGRESS = _IN_PROGRESS
     ON_HOLD = "on_hold"
-    COMPLETED = "completed"
+    COMPLETED = _COMPLETED
     ARCHIVED = "archived"
 
 
 class TaskStatus(StrEnum):
     """Task status values."""
 
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
+    PENDING = _PENDING
+    IN_PROGRESS = _IN_PROGRESS
     REVIEW = "review"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
+    COMPLETED = _COMPLETED
+    CANCELLED = _CANCELLED
 
 
 class DocumentType(StrEnum):
@@ -38,24 +45,24 @@ class DocumentType(StrEnum):
 
     SOURCE = "source"
     WORK = "work"
-    RESULT = "result"
+    DOCUMENT_RESULT = "result"
     OTHER = "other"
 
 
 class MeetingStatus(StrEnum):
     """Meeting status values."""
 
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
+    PENDING = _PENDING
+    CONFIRMED = _CONFIRMED
+    CANCELLED = _CANCELLED
+    COMPLETED = _COMPLETED
 
 
 class MeetingParticipantStatus(StrEnum):
     """Meeting participant status values."""
 
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
+    PENDING = _PENDING
+    CONFIRMED = _CONFIRMED
     DECLINED = "declined"
 
 

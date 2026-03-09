@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 performer_router = Router()
 
-STATUS_MAP = {
+# Status map for display
+_STATUS_MAP = {
     "pending": "Ожидает",
     "in_progress": "В работе",
     "review": "На проверке",
@@ -46,15 +47,18 @@ STATUS_MAP = {
 
 def _build_task_text(task: object, status_text: str) -> str:
     """Build task detail text."""
-    desc = task.description or "Нет"
-    deadline = task.deadline or "Не установлен"
+    desc_val = task.description or "Нет"
+    deadline_val = task.deadline or "Не установлен"
+    desc_label = "Описание"
+    deadline_label = "Дедлайн"
+    priority_label = "Приоритет"
     lines = [
         f"<b>{task.title}</b>",
         "",
         f"Статус: {status_text}",
-        f"Описание: {desc}",
-        f"Приоритет: {task.priority}",
-        f"Дедлайн: {deadline}",
+        f"{desc_label}: {desc_val}",
+        f"{priority_label}: {task.priority}",
+        f"{deadline_label}: {deadline_val}",
     ]
     return "\n".join(lines)
 
@@ -81,11 +85,11 @@ async def my_tasks(callback: types.CallbackQuery) -> None:
 @performer_router.callback_query(F.data.startswith("task_"))
 async def task_detail(callback: types.CallbackQuery) -> None:
     """Show task details."""
-    data = callback.data
-    if data.startswith("task_start_"):
+    callback_data = callback.data
+    if callback_data.startswith("task_start_"):
         await _start_task(callback)
         return
-    if data.startswith("task_complete_"):
+    if callback_data.startswith("task_complete_"):
         await _complete_task(callback)
         return
     await _show_task_info(callback)
@@ -119,7 +123,7 @@ async def _show_task_info(callback: types.CallbackQuery) -> None:
         if not task:
             await callback.answer("Задача не найдена", show_alert=True)
             return
-        status_text = STATUS_MAP.get(task.status.value, task.status.value)
+        status_text = _STATUS_MAP.get(task.status.value, task.status.value)
         text = _build_task_text(task, status_text)
         await callback.message.edit_text(
             text,
@@ -139,34 +143,34 @@ async def upload_doc_start(
         if task:
             await state.update_data(project_id=task.project_id)
     await callback.message.edit_text("Отправьте файл для загрузки:")
-    await state.set_state(DocumentUpload.file)
+    await state.set_state(DocumentUpload.document_file)
 
 
-@performer_router.message(DocumentUpload.file, F.document)
+@performer_router.message(DocumentUpload.document_file, F.document)
 async def upload_doc_file(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process document file."""
-    data = await state.get_data()
-    task_id = data.get("task_id")
-    project_id = data.get("project_id")
-    file = message.document
-    file_name = file.file_name
+    state_data = await state.get_data()
+    task_id = state_data.get("task_id")
+    project_id = state_data.get("project_id")
+    document_file = message.document
+    file_name = document_file.file_name
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        file_path_obj = await message.bot.get_file(file.file_id)
+        file_path_obj = await message.bot.get_file(document_file.file_id)
         dest = f"data/files/{project_id}_{file_name}"
         await message.bot.download_file(file_path_obj.file_path, dest)
-        params: DocumentCreateParams = {
+        doc_params: DocumentCreateParams = {
             "project_id": project_id,
             "task_id": task_id,
             "file_path": dest,
             "file_name": file_name,
-            "file_size": file.file_size,
+            "file_size": document_file.file_size,
             "document_type": DocumentType.WORK,
             "uploaded_by": user.id,
         }
-        await create_document(session=session, params=params)
+        await create_document(session=session, params=doc_params)
     await message.answer(
         "Документ загружен!",
         reply_markup=get_back_keyboard(f"task_{task_id}"),

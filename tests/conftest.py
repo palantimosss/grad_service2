@@ -20,6 +20,11 @@ from bot.database.models.project import Project
 from bot.database.models.task import Task
 from bot.database.models.user import User
 
+# Test constants
+TEST_TELEGRAM_ID = 123456789
+TEST_PHONE = "+79991234567"
+TEST_EMAIL = "test@example.com"
+
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator:
@@ -63,13 +68,13 @@ async def test_session(
 async def test_user(test_session: AsyncSession) -> User:
     """Create test user."""
     user = User(
-        telegram_id=123456789,
+        telegram_id=TEST_TELEGRAM_ID,
         username="testuser",
         first_name="Test",
         last_name="User",
         role=UserRole.CLIENT,
-        phone="+79991234567",
-        email="test@example.com",
+        phone=TEST_PHONE,
+        email=TEST_EMAIL,
     )
     test_session.add(user)
     await test_session.commit()

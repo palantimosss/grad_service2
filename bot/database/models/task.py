@@ -1,15 +1,15 @@
 """Task model."""
 
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-if TYPE_CHECKING:
-    from datetime import datetime
-
 from bot.database.models.base import Base
 from bot.database.models.enums import TaskStatus
+
+# String length constants
+TITLE_MAX_LENGTH = 255
 
 
 class Task(Base):
@@ -18,7 +18,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
-    title: Mapped[str] = mapped_column(String(255))
+    title: Mapped[str] = mapped_column(String(TITLE_MAX_LENGTH))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[TaskStatus] = mapped_column(default=TaskStatus.PENDING)
     performer_id: Mapped[int | None] = mapped_column(

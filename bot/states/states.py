@@ -16,8 +16,8 @@ class UserRegistration(StatesGroup):
 class ProfileEdit(StatesGroup):
     """Profile editing states."""
 
-    field = State()
-    value = State()
+    edit_field = State()
+    field_value = State()
 
 
 class ProjectCreation(StatesGroup):
@@ -68,7 +68,7 @@ class DocumentUpload(StatesGroup):
     task = State()
     document_type = State()
     description = State()
-    file = State()
+    document_file = State()
 
 
 class FeedbackCreation(StatesGroup):

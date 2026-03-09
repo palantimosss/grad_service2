@@ -9,6 +9,14 @@ from bot.services.notification import send_notification
 from bot.services.project import create_project_service
 from bot.services.task_service import create_task_service
 
+# Test date constants
+TEST_PROJECT_DEADLINE_YEAR = 2026
+TEST_PROJECT_DEADLINE_MONTH = 12
+TEST_PROJECT_DEADLINE_DAY = 31
+TEST_TASK_DEADLINE_YEAR = 2026
+TEST_TASK_DEADLINE_MONTH = 6
+TEST_TASK_DEADLINE_DAY = 30
+
 TASK_PRIORITY = 5
 
 
@@ -28,7 +36,12 @@ class TestProjectService:
                 "client_id": test_user.id,  # type: ignore[union-attr]
                 "title": "Service Test Project",
                 "description": "Test",
-                "deadline": datetime(2026, 12, 31, tzinfo=UTC),
+                "deadline": datetime(
+                    TEST_PROJECT_DEADLINE_YEAR,
+                    TEST_PROJECT_DEADLINE_MONTH,
+                    TEST_PROJECT_DEADLINE_DAY,
+                    tzinfo=UTC,
+                ),
                 "budget": 100000.0,
             },
         )
@@ -56,7 +69,12 @@ class TestTaskService:
                 "description": "Test",
                 "performer_id": None,
                 "manager_id": None,
-                "deadline": datetime(2026, 6, 30, tzinfo=UTC),
+                "deadline": datetime(
+                    TEST_TASK_DEADLINE_YEAR,
+                    TEST_TASK_DEADLINE_MONTH,
+                    TEST_TASK_DEADLINE_DAY,
+                    tzinfo=UTC,
+                ),
                 "priority": TASK_PRIORITY,
                 "status": TaskStatus.PENDING,
             },

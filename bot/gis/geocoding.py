@@ -5,12 +5,13 @@ import httpx
 from bot.config import YANDEX_GEOCODER_API_KEY
 
 POINT_LEN = 2
+REQUEST_TIMEOUT = 10.0
 
 
-def _extract_coordinates(data: dict) -> tuple[float, float] | None:
+def _extract_coordinates(response_data: dict) -> tuple[float, float] | None:
     """Extract coordinates from geocoding response data."""
     feature = (
-        data.get("response", {})
+        response_data.get("response", {})
         .get("GeoObjectCollection", {})
         .get("featureMember", [])
     )
@@ -37,29 +38,29 @@ async def geocode_address(address: str) -> tuple[float, float] | None:
         return None
 
     url = "https://geocode-maps.yandex.ru/1.x/"
-    params = {
+    request_params = {
         "apikey": YANDEX_GEOCODER_API_KEY,
         "geocode": address,
         "format": "json",
         "lang": "ru_RU",
     }
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, params=params, timeout=10.0)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url, params=request_params, timeout=REQUEST_TIMEOUT,
+            )
             response.raise_for_status()
-            data = response.json()
-            return _extract_coordinates(data)
-        except (httpx.HTTPError, ValueError, KeyError):
-            return None
-
-    return None
+            response_data = response.json()
+            return _extract_coordinates(response_data)
+    except (httpx.HTTPError, ValueError, KeyError):
+        return None
 
 
-def _extract_name(data: dict) -> str | None:
+def _extract_name(response_data: dict) -> str | None:
     """Extract name from reverse geocoding response."""
     feature = (
-        data.get("response", {})
+        response_data.get("response", {})
         .get("GeoObjectCollection", {})
         .get("featureMember", [])
     )
@@ -81,7 +82,7 @@ async def reverse_geocode(
         return None
 
     url = "https://geocode-maps.yandex.ru/1.x/"
-    params = {
+    request_params = {
         "apikey": YANDEX_GEOCODER_API_KEY,
         "geocode": f"{longitude},{latitude}",
         "format": "json",
@@ -89,13 +90,13 @@ async def reverse_geocode(
         "kind": "locality",
     }
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, params=params, timeout=10.0)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                url, params=request_params, timeout=REQUEST_TIMEOUT,
+            )
             response.raise_for_status()
-            data = response.json()
-            return _extract_name(data)
-        except (httpx.HTTPError, ValueError, KeyError):
-            return None
-
-    return None
+            response_data = response.json()
+            return _extract_name(response_data)
+    except (httpx.HTTPError, ValueError, KeyError):
+        return None

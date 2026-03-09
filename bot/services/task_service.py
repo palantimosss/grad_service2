@@ -32,12 +32,12 @@ class TaskServiceParams(TypedDict, total=False):
 
 async def create_task_service(
     session: AsyncSession,
-    params: TaskServiceParams,
+    task_data: TaskServiceParams,
 ) -> object | None:
     """Create a new task."""
     return await create_task_db(
         session=session,
-        params=params,
+        params=task_data,
     )
 
 

@@ -69,15 +69,54 @@ from bot.database.models.enums import (
     UserRole,
 )
 
-# Constants for test assertions
-EXPECTED_ONE_ITEM = 1
-EXPECTED_TWO_ITEMS = 2
-EXPECTED_FIVE_RATING = 5
-
 if TYPE_CHECKING:
     from bot.database.models.project import Project
     from bot.database.models.task import Task
     from bot.database.models.user import User
+
+# Test constants
+TEST_YEAR = 2026
+TEST_MONTH = 12
+TEST_DAY = 31
+TEST_HOUR = 10
+TEST_MINUTE = 0
+TEST_MINUTE_LATER = 11
+TEST_FILE_PATH = "/files/test.pdf"
+TEST_FILE_NAME = "test.pdf"
+TEST_FILE_SIZE = 1024
+TEST_MEETING_TITLE = "Test Meeting"
+TEST_COMPANY_NAME = "Test Company"
+TEST_FEEDBACK_MESSAGE = "Great project!"
+TEST_STAGE_TITLE = "Design Phase"
+TEST_TELEGRAM_ID_MIN = 1_000_000_000
+TEST_TELEGRAM_ID_MAX = 9_000_000_000
+
+# Field key constants
+_PROJECT_ID_KEY = "project_id"
+_FILE_PATH_KEY = "file_path"
+_FILE_NAME_KEY = "file_name"
+_FILE_SIZE_KEY = "file_size"
+_DOCUMENT_TYPE_KEY = "document_type"
+_TITLE_KEY = "title"
+_ORGANIZER_ID_KEY = "organizer_id"
+_SCHEDULED_AT_KEY = "scheduled_at"
+_AUTHOR_ID_KEY = "author_id"
+_MESSAGE_KEY = "message"
+_RATING_KEY = "rating"
+_ORDER_KEY = "order"
+_PLANNED_START_KEY = "planned_start"
+_PLANNED_END_KEY = "planned_end"
+_STATUS_KEY = "status"
+_NAME_KEY = "name"
+_MEETING_ID_KEY = "meeting_id"
+_ADDRESS_KEY = "address"
+_COORDINATES_KEY = "coordinates"
+_INSIDE_ZONE_KEY = "inside_zone"
+
+# Constants for test assertions
+EXPECTED_ONE_ITEM = 1
+EXPECTED_TWO_ITEMS = 2
+EXPECTED_FIVE_RATING = 5
 
 
 @pytest.mark.asyncio
@@ -93,14 +132,14 @@ class TestDocumentCRUD:
         doc = await create_document(
             test_session,
             {
-                "project_id": test_project.id,
-                "file_path": "/files/test.pdf",
-                "file_name": "test.pdf",
-                "file_size": 1024,
-                "document_type": DocumentType.SOURCE,
+                _PROJECT_ID_KEY: test_project.id,
+                _FILE_PATH_KEY: TEST_FILE_PATH,
+                _FILE_NAME_KEY: TEST_FILE_NAME,
+                _FILE_SIZE_KEY: TEST_FILE_SIZE,
+                _DOCUMENT_TYPE_KEY: DocumentType.SOURCE,
             },
         )
-        assert doc.file_name == "test.pdf"
+        assert doc.file_name == TEST_FILE_NAME
         assert doc.document_type == DocumentType.SOURCE
 
     async def test_get_document_by_id(
@@ -185,11 +224,11 @@ class TestDocumentCRUD:
         doc = await create_document(
             test_session,
             {
-                "project_id": test_project.id,
-                "file_path": "/files/test.pdf",
-                "file_name": "test.pdf",
-                "file_size": 1024,
-                "document_type": DocumentType.SOURCE,
+                _PROJECT_ID_KEY: test_project.id,
+                _FILE_PATH_KEY: TEST_FILE_PATH,
+                _FILE_NAME_KEY: TEST_FILE_NAME,
+                _FILE_SIZE_KEY: TEST_FILE_SIZE,
+                _DOCUMENT_TYPE_KEY: DocumentType.SOURCE,
             },
         )
         deleted = await delete_document(test_session, doc.id)
@@ -212,15 +251,18 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_HOUR, TEST_MINUTE, tzinfo=UTC,
+                ),
                 "duration_minutes": 60,
                 "is_online": True,
             },
         )
-        assert meeting.title == "Test Meeting"
+        assert meeting.title == TEST_MEETING_TITLE
         assert meeting.is_online is True
 
     async def test_get_meeting_by_id(
@@ -233,15 +275,18 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_HOUR, TEST_MINUTE, tzinfo=UTC,
+                ),
             },
         )
         retrieved = await get_meeting_by_id(test_session, meeting.id)
         assert retrieved is not None
-        assert retrieved.title == "Test Meeting"
+        assert retrieved.title == TEST_MEETING_TITLE
 
     async def test_get_meetings_by_project_id(
         self,
@@ -253,19 +298,25 @@ class TestMeetingCRUD:
         await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Meeting 1",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Meeting 1",
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_HOUR, TEST_MINUTE, tzinfo=UTC,
+                ),
             },
         )
         await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Meeting 2",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 11, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Meeting 2",
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_MINUTE_LATER, TEST_MINUTE, tzinfo=UTC,
+                ),
             },
         )
         meetings = await get_meetings_by_project_id(
@@ -388,13 +439,13 @@ class TestFeedbackCRUD:
         feedback = await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": "Great project!",
-                "rating": 5,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: TEST_FEEDBACK_MESSAGE,
+                _RATING_KEY: EXPECTED_FIVE_RATING,
             },
         )
-        assert feedback.message == "Great project!"
+        assert feedback.message == TEST_FEEDBACK_MESSAGE
         assert feedback.rating == EXPECTED_FIVE_RATING
 
     async def test_get_feedback_by_id(
@@ -407,15 +458,15 @@ class TestFeedbackCRUD:
         feedback = await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": "Great project!",
-                "rating": 5,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: TEST_FEEDBACK_MESSAGE,
+                _RATING_KEY: EXPECTED_FIVE_RATING,
             },
         )
         retrieved = await get_feedback_by_id(test_session, feedback.id)
         assert retrieved is not None
-        assert retrieved.message == "Great project!"
+        assert retrieved.message == TEST_FEEDBACK_MESSAGE
 
     async def test_get_feedbacks_by_project_id(
         self,
@@ -482,14 +533,14 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Design Phase",
-                "order": 1,
-                "planned_start": datetime(2026, 1, 1, tzinfo=UTC),
-                "planned_end": datetime(2026, 2, 1, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(TEST_YEAR, 1, 1, tzinfo=UTC),
+                _PLANNED_END_KEY: datetime(TEST_YEAR, 2, 1, tzinfo=UTC),
             },
         )
-        assert stage.title == "Design Phase"
+        assert stage.title == TEST_STAGE_TITLE
         assert stage.order == 1
 
     async def test_get_stage_by_id(
@@ -501,16 +552,16 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Design Phase",
-                "order": 1,
-                "planned_start": datetime(2026, 1, 1, tzinfo=UTC),
-                "planned_end": datetime(2026, 2, 1, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(TEST_YEAR, 1, 1, tzinfo=UTC),
+                _PLANNED_END_KEY: datetime(TEST_YEAR, 2, 1, tzinfo=UTC),
             },
         )
         retrieved = await get_stage_by_id(test_session, stage.id)
         assert retrieved is not None
-        assert retrieved.title == "Design Phase"
+        assert retrieved.title == TEST_STAGE_TITLE
 
     async def test_get_stages_by_project_id(
         self,
@@ -521,10 +572,10 @@ class TestStageCRUD:
         await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Stage 1",
-                "order": 1,
-                "planned_start": datetime(2026, 1, 1, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Stage 1",
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(TEST_YEAR, 1, 1, tzinfo=UTC),
             },
         )
         await create_stage(
@@ -742,12 +793,12 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": "Test Company",
+                _NAME_KEY: TEST_COMPANY_NAME,
                 "inn": "1234567890",
                 "email": "test@company.com",
             },
         )
-        assert company.name == "Test Company"
+        assert company.name == TEST_COMPANY_NAME
         assert company.inn == "1234567890"
 
     async def test_get_company_by_id(
@@ -758,13 +809,13 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": "Test Company",
+                _NAME_KEY: TEST_COMPANY_NAME,
                 "inn": "1234567890",
             },
         )
         retrieved = await get_company_by_id(test_session, company.id)
         assert retrieved is not None
-        assert retrieved.name == "Test Company"
+        assert retrieved.name == TEST_COMPANY_NAME
 
     async def test_get_all_companies(
         self,
@@ -828,19 +879,22 @@ class TestGISLogCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_HOUR, TEST_MINUTE, tzinfo=UTC,
+                ),
             },
         )
         log = await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": "Test Address",
-                "coordinates": "30.3158,59.9391",
-                "inside_zone": True,
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: "Test Address",
+                _COORDINATES_KEY: "30.3158,59.9391",
+                _INSIDE_ZONE_KEY: True,
             },
         )
         assert log.address == "Test Address"
@@ -856,17 +910,20 @@ class TestGISLogCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Test Meeting",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(2026, 12, 31, 10, 0, tzinfo=UTC),
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
+                    TEST_YEAR, TEST_MONTH, TEST_DAY,
+                    TEST_HOUR, TEST_MINUTE, tzinfo=UTC,
+                ),
             },
         )
         await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": "Address 1",
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: "Address 1",
                 "coordinates": "30.3158,59.9391",
                 "inside_zone": True,
             },
@@ -955,7 +1012,9 @@ async def create_user_for_stats(
     return await create_user(
         session,
         {
-            "telegram_id": 1_000_000_000 + secrets.randbelow(9_000_000_000),
+            "telegram_id": TEST_TELEGRAM_ID_MIN + secrets.randbelow(
+                TEST_TELEGRAM_ID_MAX - TEST_TELEGRAM_ID_MIN,
+            ),
             "username": f"statsuser_{role.value}",
             "first_name": "Stats",
             "last_name": "User",

@@ -36,25 +36,27 @@ async def get_user_by_telegram_id(
     session: AsyncSession, telegram_id: int,
 ) -> User | None:
     """Get user by Telegram ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(User).where(User.telegram_id == telegram_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_user_by_id(
     session: AsyncSession, user_id: int,
 ) -> User | None:
     """Get user by internal ID."""
-    result = await session.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    query_result = await session.execute(
+        select(User).where(User.id == user_id),
+    )
+    return query_result.scalar_one_or_none()
 
 
 async def create_user(
-    session: AsyncSession, params: UserCreateParams,
+    session: AsyncSession, user_data: UserCreateParams,
 ) -> User:
     """Create a new user."""
-    user = User(**params)
+    user = User(**user_data)
     session.add(user)
     await session.commit()
     await session.refresh(user)
@@ -77,11 +79,13 @@ async def update_user_role(
 async def update_user_profile(
     session: AsyncSession,
     telegram_id: int,
-    params: UserUpdateParams,
+    user_data: UserUpdateParams,
 ) -> User | None:
     """Update user profile fields."""
     await session.execute(
-        update(User).where(User.telegram_id == telegram_id).values(**params),
+        update(User)
+        .where(User.telegram_id == telegram_id)
+        .values(**user_data),
     )
     await session.commit()
     return await get_user_by_telegram_id(session, telegram_id)
@@ -91,22 +95,24 @@ async def delete_user(
     session: AsyncSession, telegram_id: int,
 ) -> bool:
     """Delete user by Telegram ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(User).where(User.telegram_id == telegram_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0
 
 
 async def get_all_users(session: AsyncSession) -> list[User]:
     """Get all users."""
-    result = await session.execute(select(User))
-    return list(result.scalars().all())
+    query_result = await session.execute(select(User))
+    return list(query_result.scalars().all())
 
 
 async def get_users_by_role(
     session: AsyncSession, role: UserRole,
 ) -> list[User]:
     """Get users by role."""
-    result = await session.execute(select(User).where(User.role == role))
-    return list(result.scalars().all())
+    query_result = await session.execute(
+        select(User).where(User.role == role),
+    )
+    return list(query_result.scalars().all())

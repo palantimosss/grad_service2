@@ -24,10 +24,13 @@ class NotificationParams(TypedDict, total=False):
 
 async def send_notification(
     session: AsyncSession,
-    params: NotificationParams,
+    notification_data: NotificationParams,
 ) -> object | None:
     """Send notification to user."""
-    return await create_notification_db(session=session, params=params)
+    return await create_notification_db(
+        session=session,
+        params=notification_data,
+    )
 
 
 async def notify_new_project(

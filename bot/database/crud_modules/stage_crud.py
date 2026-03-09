@@ -28,29 +28,29 @@ async def get_stage_by_id(
     session: AsyncSession, stage_id: int,
 ) -> ProjectStage | None:
     """Get stage by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(ProjectStage).where(ProjectStage.id == stage_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_stages_by_project_id(
     session: AsyncSession, project_id: int,
 ) -> list[ProjectStage]:
     """Get stages by project ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(ProjectStage)
         .where(ProjectStage.project_id == project_id)
         .order_by(ProjectStage.order),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def create_stage(
-    session: AsyncSession, params: StageCreateParams,
+    session: AsyncSession, stage_data: StageCreateParams,
 ) -> ProjectStage:
     """Create a new stage."""
-    stage = ProjectStage(**params)
+    stage = ProjectStage(**stage_data)
     session.add(stage)
     await session.commit()
     await session.refresh(stage)
@@ -76,8 +76,8 @@ async def delete_stage(
     session: AsyncSession, stage_id: int,
 ) -> bool:
     """Delete stage by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(ProjectStage).where(ProjectStage.id == stage_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0

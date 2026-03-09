@@ -1,0 +1,61 @@
+"""Project, Stage, Task CRUD operations."""
+
+from bot.database.crud_modules.project_crud import (
+    ProjectCreateParams,
+    assign_manager_to_project,
+    create_project,
+    delete_project,
+    get_all_projects,
+    get_pending_projects,
+    get_project_by_id,
+    get_projects_by_client_id,
+    get_projects_by_manager_id,
+    update_project_status,
+)
+from bot.database.crud_modules.stage_crud import (
+    StageCreateParams,
+    create_stage,
+    delete_stage,
+    get_stage_by_id,
+    get_stages_by_project_id,
+    update_stage_status,
+)
+from bot.database.crud_modules.task_crud import (
+    TaskCreateParams,
+    assign_task_to_performer,
+    create_task,
+    delete_task,
+    get_all_tasks,
+    get_task_by_id,
+    get_tasks_by_performer_id,
+    get_tasks_by_project_id,
+    update_task_status,
+)
+
+__all__ = [
+    "ProjectCreateParams",
+    "StageCreateParams",
+    "TaskCreateParams",
+    "assign_manager_to_project",
+    "assign_task_to_performer",
+    "create_project",
+    "create_stage",
+    "create_task",
+    "delete_project",
+    "delete_stage",
+    "delete_task",
+    "get_all_projects",
+    "get_all_tasks",
+    "get_pending_projects",
+    "get_project_by_id",
+    "get_projects_by_client_id",
+    "get_projects_by_manager_id",
+    "get_stage_by_id",
+    "get_stages_by_project_id",
+    "get_task_by_id",
+    "get_tasks_by_performer_id",
+    "get_tasks_by_project_id",
+    "update_project_status",
+    "update_stage_status",
+    "update_task_status",
+]

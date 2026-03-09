@@ -17,9 +17,9 @@ class LoggingMiddleware(BaseMiddleware):
 
     async def __call__(
         self,
-        handler: Callable[[Any, dict[str, Any]], Awaitable[Any]],
+        request_handler: Callable[[Any, dict[str, Any]], Awaitable[Any]],
         event: Message | CallbackQuery,
-        data: dict[str, Any],
+        handler_data: dict[str, Any],
     ) -> object:
         """Log incoming update."""
         if isinstance(event, Message):
@@ -34,4 +34,4 @@ class LoggingMiddleware(BaseMiddleware):
                 event.from_user.username or event.from_user.id,
                 event.data,
             )
-        return await handler(event, data)
+        return await request_handler(event, handler_data)

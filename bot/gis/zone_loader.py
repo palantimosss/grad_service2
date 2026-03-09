@@ -5,6 +5,10 @@ from typing import Any
 
 from bot.config import DATA_DIR
 
+# Type aliases for complex annotations
+PolygonCoords = list[tuple[float, float]]
+MultiPolygonCoords = list[list[tuple[float, float]]]
+
 
 def load_service_zone() -> dict[str, Any] | None:
     """Load service zone from GeoJSON file."""
@@ -12,25 +16,26 @@ def load_service_zone() -> dict[str, Any] | None:
     if not zone_path.exists():
         return None
 
-    with zone_path.open(encoding="utf-8") as f:
-        return json.load(f)
+    with zone_path.open(encoding="utf-8") as zone_file:
+        return json.load(zone_file)
 
 
 def get_zone_polygons(
     zone_data: dict[str, Any],
-) -> list[list[tuple[float, float]]]:
+) -> MultiPolygonCoords:
     """Extract polygons from zone data."""
-    polygons: list[list[tuple[float, float]]] = []
+    polygons: MultiPolygonCoords = []
     features = zone_data.get("features", [])
 
     for feature in features:
         geometry = feature.get("geometry", {})
         geom_type = geometry.get("type")
-        coords = geometry.get("coordinates", [])
+        coordinates = geometry.get("coordinates", [])
 
         if geom_type == "Polygon":
-            polygons.append(coords[0])
+            polygons.append(coordinates[0])
         elif geom_type == "MultiPolygon":
-            polygons.extend(polygon_coords[0] for polygon_coords in coords)
+            for polygon_coords in coordinates:
+                polygons.append(polygon_coords[0])
 
     return polygons

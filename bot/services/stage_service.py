@@ -28,12 +28,12 @@ class StageServiceParams(TypedDict, total=False):
 
 async def create_stage_service(
     session: AsyncSession,
-    params: StageServiceParams,
+    stage_data: StageServiceParams,
 ) -> object | None:
     """Create a new project stage."""
     return await create_stage_db(
         session=session,
-        params=params,
+        params=stage_data,
     )
 
 

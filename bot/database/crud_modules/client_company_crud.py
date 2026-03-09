@@ -26,25 +26,25 @@ async def get_company_by_id(
     session: AsyncSession, company_id: int,
 ) -> ClientCompany | None:
     """Get company by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(ClientCompany).where(ClientCompany.id == company_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_all_companies(
     session: AsyncSession,
 ) -> list[ClientCompany]:
     """Get all companies."""
-    result = await session.execute(select(ClientCompany))
-    return list(result.scalars().all())
+    query_result = await session.execute(select(ClientCompany))
+    return list(query_result.scalars().all())
 
 
 async def create_company(
-    session: AsyncSession, params: CompanyCreateParams,
+    session: AsyncSession, company_data: CompanyCreateParams,
 ) -> ClientCompany:
     """Create a new company."""
-    company = ClientCompany(**params)
+    company = ClientCompany(**company_data)
     session.add(company)
     await session.commit()
     await session.refresh(company)
@@ -54,13 +54,13 @@ async def create_company(
 async def update_company(
     session: AsyncSession,
     company_id: int,
-    params: CompanyCreateParams,
+    company_data: CompanyCreateParams,
 ) -> ClientCompany | None:
     """Update company fields."""
     await session.execute(
         update(ClientCompany)
         .where(ClientCompany.id == company_id)
-        .values(**params),
+        .values(**company_data),
     )
     await session.commit()
     return await get_company_by_id(session, company_id)
@@ -70,8 +70,8 @@ async def delete_company(
     session: AsyncSession, company_id: int,
 ) -> bool:
     """Delete company by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(ClientCompany).where(ClientCompany.id == company_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0

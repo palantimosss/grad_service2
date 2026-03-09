@@ -39,13 +39,13 @@ async def check_meeting_address(
 
     longitude, latitude = coordinates
     zone_data = load_service_zone()
-    inside_zone, message = check_address_in_zone(
+    is_inside, message = check_address_in_zone(
         longitude, latitude, zone_data,
     )
 
     return GISCheckResult(
         success=True,
         coordinates=coordinates,
-        inside_zone=inside_zone,
+        inside_zone=is_inside,
         message=message,
     )

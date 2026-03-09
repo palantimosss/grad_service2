@@ -22,6 +22,16 @@ from bot.database.models.notification import Notification
 # Constants for test assertions
 EXPECTED_TWO_ITEMS = 2
 
+# Field key constants
+_USER_ID_KEY = "user_id"
+_TITLE_KEY = "title"
+_MESSAGE_KEY = "message"
+_NOTIFICATION_TYPE_KEY = "notification_type"
+
+# Test data constants
+TEST_NOTIFICATION_TITLE = "Test Notification"
+TEST_NOTIFICATION_MESSAGE = "Test message"
+
 
 @pytest.mark.asyncio
 class TestNotificationCRUD:
@@ -36,13 +46,13 @@ class TestNotificationCRUD:
         notification = await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Test Notification",
-                "message": "Test message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: TEST_NOTIFICATION_TITLE,
+                _MESSAGE_KEY: TEST_NOTIFICATION_MESSAGE,
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
-        assert notification.title == "Test Notification"
+        assert notification.title == TEST_NOTIFICATION_TITLE
         assert notification.is_read is False
 
     async def test_get_notification_by_id(
@@ -54,15 +64,15 @@ class TestNotificationCRUD:
         notification = await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Test Notification",
-                "message": "Test message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: TEST_NOTIFICATION_TITLE,
+                _MESSAGE_KEY: TEST_NOTIFICATION_MESSAGE,
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         retrieved = await get_notification_by_id(test_session, notification.id)
         assert retrieved is not None
-        assert retrieved.title == "Test Notification"
+        assert retrieved.title == TEST_NOTIFICATION_TITLE
 
     async def test_get_notifications_by_user_id(
         self,
@@ -102,10 +112,10 @@ class TestNotificationCRUD:
         notification = await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Test Notification",
-                "message": "Test message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: TEST_NOTIFICATION_TITLE,
+                _MESSAGE_KEY: TEST_NOTIFICATION_MESSAGE,
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         assert notification.is_read is False
@@ -125,10 +135,10 @@ class TestNotificationCRUD:
         notification = await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Test Notification",
-                "message": "Test message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: TEST_NOTIFICATION_TITLE,
+                _MESSAGE_KEY: TEST_NOTIFICATION_MESSAGE,
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         deleted = await delete_notification(test_session, notification.id)
@@ -145,28 +155,28 @@ class TestNotificationCRUD:
         await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Unread Notification",
-                "message": "Message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: "Unread Notification",
+                _MESSAGE_KEY: "Message",
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Read Notification",
-                "message": "Message",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: "Read Notification",
+                _MESSAGE_KEY: "Message",
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         # Mark second as read
-        result = await test_session.execute(
+        query_result = await test_session.execute(
             select(Notification)
             .where(Notification.title == "Read Notification"),
         )
-        notif = result.scalar_one()
-        notif.is_read = True
+        notification_item = query_result.scalar_one()
+        notification_item.is_read = True
         await test_session.commit()
 
         unread = await get_unread_notifications(test_session, test_user.id)
@@ -181,19 +191,19 @@ class TestNotificationCRUD:
         await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Notification 1",
-                "message": "Message 1",
-                "notification_type": NotificationType.NEW_TASK,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: "Notification 1",
+                _MESSAGE_KEY: "Message 1",
+                _NOTIFICATION_TYPE_KEY: NotificationType.NEW_TASK,
             },
         )
         await create_notification(
             test_session,
             {
-                "user_id": test_user.id,
-                "title": "Notification 2",
-                "message": "Message 2",
-                "notification_type": NotificationType.DEADLINE_SOON,
+                _USER_ID_KEY: test_user.id,
+                _TITLE_KEY: "Notification 2",
+                _MESSAGE_KEY: "Message 2",
+                _NOTIFICATION_TYPE_KEY: NotificationType.DEADLINE_SOON,
             },
         )
         await mark_all_notifications_as_read(test_session, test_user.id)
@@ -201,7 +211,7 @@ class TestNotificationCRUD:
         notifications = await get_notifications_by_user_id(
             test_session, test_user.id,
         )
-        assert all(n.is_read for n in notifications)
+        assert all(notification.is_read for notification in notifications)
 
 
 class TestDatabase:

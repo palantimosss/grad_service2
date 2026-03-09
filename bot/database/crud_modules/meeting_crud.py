@@ -34,29 +34,29 @@ async def get_meeting_by_id(
     session: AsyncSession, meeting_id: int,
 ) -> Meeting | None:
     """Get meeting by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Meeting)
         .options(selectinload(Meeting.participants))
         .where(Meeting.id == meeting_id),
     )
-    return result.scalar_one_or_none()
+    return query_result.scalar_one_or_none()
 
 
 async def get_meetings_by_project_id(
     session: AsyncSession, project_id: int,
 ) -> list[Meeting]:
     """Get meetings by project ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(Meeting).where(Meeting.project_id == project_id),
     )
-    return list(result.scalars().all())
+    return list(query_result.scalars().all())
 
 
 async def create_meeting(
-    session: AsyncSession, params: MeetingCreateParams,
+    session: AsyncSession, meeting_data: MeetingCreateParams,
 ) -> Meeting:
     """Create a new meeting."""
-    meeting = Meeting(**params)
+    meeting = Meeting(**meeting_data)
     session.add(meeting)
     await session.commit()
     await session.refresh(meeting)
@@ -82,11 +82,11 @@ async def delete_meeting(
     session: AsyncSession, meeting_id: int,
 ) -> bool:
     """Delete meeting by ID."""
-    result = await session.execute(
+    query_result = await session.execute(
         delete(Meeting).where(Meeting.id == meeting_id),
     )
     await session.commit()
-    return result.rowcount > 0
+    return query_result.rowcount > 0
 
 
 async def add_meeting_participant(
@@ -117,13 +117,13 @@ async def update_participant_status(
     status: MeetingParticipantStatus,
 ) -> MeetingParticipant | None:
     """Update participant status."""
-    result = await session.execute(
+    query_result = await session.execute(
         select(MeetingParticipant).where(
             MeetingParticipant.meeting_id == meeting_id,
             MeetingParticipant.user_id == user_id,
         ),
     )
-    participant = result.scalar_one_or_none()
+    participant = query_result.scalar_one_or_none()
     if participant:
         participant.status = status
         await session.commit()

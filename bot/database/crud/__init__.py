@@ -1,6 +1,6 @@
 """CRUD operations aggregator."""
 
-from bot.database.crud_modules.client_company_crud import (
+from bot.database.crud._companies import (
     CompanyCreateParams,
     create_company,
     delete_company,
@@ -8,7 +8,7 @@ from bot.database.crud_modules.client_company_crud import (
     get_company_by_id,
     update_company,
 )
-from bot.database.crud_modules.document_crud import (
+from bot.database.crud._documents import (
     DocumentCreateParams,
     create_document,
     delete_document,
@@ -17,30 +17,28 @@ from bot.database.crud_modules.document_crud import (
     get_documents_by_task_id,
     update_document,
 )
-from bot.database.crud_modules.feedback_crud import (
+from bot.database.crud._feedback import (
     FeedbackCreateParams,
     create_feedback,
     delete_feedback,
     get_feedback_by_id,
     get_feedbacks_by_project_id,
 )
-from bot.database.crud_modules.gis_log_crud import (
+from bot.database.crud._meetings import (
     GISLogCreateParams,
-    create_gis_check_log,
-    delete_gis_log,
-    get_gis_logs_by_meeting_id,
-)
-from bot.database.crud_modules.meeting_crud import (
     MeetingCreateParams,
     add_meeting_participant,
+    create_gis_check_log,
     create_meeting,
+    delete_gis_log,
     delete_meeting,
+    get_gis_logs_by_meeting_id,
     get_meeting_by_id,
     get_meetings_by_project_id,
     update_meeting_status,
     update_participant_status,
 )
-from bot.database.crud_modules.notification_crud import (
+from bot.database.crud._notifications import (
     NotificationCreateParams,
     create_notification,
     delete_notification,
@@ -49,27 +47,38 @@ from bot.database.crud_modules.notification_crud import (
     mark_all_notifications_as_read,
     mark_notification_as_read,
 )
-from bot.database.crud_modules.project_crud import (
+from bot.database.crud._params import (
     ProjectCreateParams,
+    StageCreateParams,
+    TaskCreateParams,
+    UserCreateParams,
+    UserUpdateParams,
+)
+from bot.database.crud._projects import (
     assign_manager_to_project,
+    assign_task_to_performer,
     create_project,
+    create_stage,
+    create_task,
     delete_project,
+    delete_stage,
+    delete_task,
     get_all_projects,
+    get_all_tasks,
     get_pending_projects,
     get_project_by_id,
     get_projects_by_client_id,
     get_projects_by_manager_id,
-    update_project_status,
-)
-from bot.database.crud_modules.stage_crud import (
-    StageCreateParams,
-    create_stage,
-    delete_stage,
     get_stage_by_id,
     get_stages_by_project_id,
+    get_task_by_id,
+    get_tasks_by_performer_id,
+    get_tasks_by_project_id,
+    update_project_status,
     update_stage_status,
+    update_task_status,
 )
-from bot.database.crud_modules.statistics_crud import (
+from bot.database.crud._statistics import (
     get_manager_projects_count,
     get_performer_tasks_count,
     get_projects_count_by_status,
@@ -79,20 +88,7 @@ from bot.database.crud_modules.statistics_crud import (
     get_total_users_count,
     get_users_count_by_role,
 )
-from bot.database.crud_modules.task_crud import (
-    TaskCreateParams,
-    assign_task_to_performer,
-    create_task,
-    delete_task,
-    get_all_tasks,
-    get_task_by_id,
-    get_tasks_by_performer_id,
-    get_tasks_by_project_id,
-    update_task_status,
-)
-from bot.database.crud_modules.user_crud import (
-    UserCreateParams,
-    UserUpdateParams,
+from bot.database.crud._users import (
     create_user,
     delete_user,
     get_all_users,

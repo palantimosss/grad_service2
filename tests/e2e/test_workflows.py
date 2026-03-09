@@ -20,6 +20,12 @@ from bot.database.crud_modules.user_crud import (
 )
 from bot.database.models.enums import ProjectStatus, TaskStatus, UserRole
 
+# Test date constants
+TEST_DEADLINE_YEAR = 2026
+TEST_DEADLINE_MONTH = 12
+TEST_DEADLINE_DAY = 31
+TEST_TASK_DEADLINE_DAY = 30
+
 
 @pytest.mark.asyncio
 class TestUserRegistrationFlow:
@@ -76,7 +82,12 @@ class TestProjectWorkflow:
                 "title": "Workflow Project",
                 "description": "Full workflow test",
                 "client_id": test_user.id,  # type: ignore[union-attr]
-                "deadline": datetime(2026, 12, 31, tzinfo=UTC),
+                "deadline": datetime(
+                    TEST_DEADLINE_YEAR,
+                    TEST_DEADLINE_MONTH,
+                    TEST_DEADLINE_DAY,
+                    tzinfo=UTC,
+                ),
                 "budget": 50000.0,
                 "status": ProjectStatus.DRAFT,
             },
@@ -118,7 +129,12 @@ class TestTaskWorkflow:
                 "description": "Task workflow test",
                 "performer_id": test_user.id,  # type: ignore[union-attr]
                 "manager_id": test_user.id,  # type: ignore[union-attr]
-                "deadline": datetime(2026, 6, 30, tzinfo=UTC),
+                "deadline": datetime(
+                    TEST_DEADLINE_YEAR,
+                    6,
+                    TEST_TASK_DEADLINE_DAY,
+                    tzinfo=UTC,
+                ),
                 "priority": 3,
                 "status": TaskStatus.PENDING,
             },

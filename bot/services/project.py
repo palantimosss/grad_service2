@@ -31,12 +31,12 @@ class ProjectServiceParams(TypedDict, total=False):
 
 async def create_project_service(
     session: AsyncSession,
-    params: ProjectServiceParams,
+    project_data: ProjectServiceParams,
 ) -> object | None:
     """Create a new project."""
     return await create_project_db(
         session=session,
-        params=params,
+        params=project_data,
     )
 
 

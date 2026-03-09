@@ -31,12 +31,22 @@ logger = logging.getLogger(__name__)
 
 notifications_router = Router()
 
-STATUS_MAP = {
+# Status map for display
+_STATUS_MAP = {
     "pending": "Ожидает",
     "confirmed": "Подтверждена",
     "cancelled": "Отменена",
     "completed": "Завершена",
 }
+
+# Optional meeting fields
+_OPTIONAL_MEETING_FIELDS = [
+    "description",
+    "address",
+    "coordinates",
+    "online_link",
+    "gis_check_result",
+]
 
 
 def _parse_datetime(text: str) -> datetime | None:
@@ -50,50 +60,48 @@ def _parse_datetime(text: str) -> datetime | None:
 
 
 def _add_optional_param(
-    params: dict, data: dict, key: str,
+    meeting_params: dict, meeting_data: dict, field_key: str,
 ) -> None:
     """Add optional parameter to params if present in data."""
-    if data.get(key):
-        params[key] = data[key]
+    if meeting_data.get(field_key):
+        meeting_params[field_key] = meeting_data[field_key]
 
 
 def _build_meeting_params(
-    data: dict, user_id: int,
+    meeting_data: dict, user_id: int,
 ) -> MeetingCreateParams:
     """Build meeting creation params."""
     params: MeetingCreateParams = {
-        "project_id": data["project_id"],
-        "title": data["title"],
+        "project_id": meeting_data["project_id"],
+        "title": meeting_data["title"],
         "organizer_id": user_id,
-        "scheduled_at": data["scheduled_at"],
-        "duration_minutes": data.get("duration", 60),
-        "is_online": data.get("is_online", False),
+        "scheduled_at": meeting_data["scheduled_at"],
+        "duration_minutes": meeting_data.get("duration", 60),
+        "is_online": meeting_data.get("is_online", False),
     }
-    for key in [
-        "description",
-        "address",
-        "coordinates",
-        "online_link",
-        "gis_check_result",
-    ]:
-        _add_optional_param(params, data, key)
+    for field_key in _OPTIONAL_MEETING_FIELDS:
+        _add_optional_param(params, meeting_data, field_key)
     return params
 
 
 def _build_meeting_text(meeting: object) -> str:
     """Build meeting detail text."""
-    format_str = "Онлайн" if meeting.is_online else "Офлайн"
+    format_label = "Онлайн" if meeting.is_online else "Офлайн"
     location = meeting.online_link if meeting.is_online else meeting.address
     loc_text = location or "Не указана"
-    status_text = STATUS_MAP.get(meeting.status.value, meeting.status.value)
+    status_text = _STATUS_MAP.get(meeting.status.value, meeting.status.value)
+    format_str = "Формат"
+    loc_label = "Локация"
+    date_label = "Дата"
+    duration_label = "Длительность"
     lines = [
         f"<b>{meeting.title}</b>",
         "",
         f"Статус: {status_text}",
-        f"Формат: {format_str}",
-        f"Локация: {loc_text}",
-        f"Дата: {meeting.scheduled_at}",
-        f"Длительность: {meeting.duration_minutes} мин",
+        f"{format_str}: {format_label}",
+        f"{loc_label}: {loc_text}",
+        f"{date_label}: {meeting.scheduled_at}",
+        f"{duration_label}: {meeting.duration_minutes} мин",
     ]
     return "\n".join(lines)
 
@@ -192,20 +200,20 @@ async def meeting_address(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process address, check via GIS, and create meeting."""
-    address = message.text
-    gis_result = await check_meeting_address(address)
+    address_val = message.text
+    gis_result = await check_meeting_address(address_val)
     if not gis_result.success:
         await message.answer(
             f"Ошибка: {gis_result.message}\n"
             "Попробуйте другой адрес или выберите онлайн:",
         )
         return
-    coords = f"{gis_result.coordinates[0]},{gis_result.coordinates[1]}"
-    gis_status = "inside" if gis_result.inside_zone else "outside"
+    coord_val = f"{gis_result.coordinates[0]},{gis_result.coordinates[1]}"
+    gis_status_val = "inside" if gis_result.inside_zone else "outside"
     await state.update_data(
-        address=address,
-        coordinates=coords,
-        gis_check_result=gis_status,
+        address=address_val,
+        coordinates=coord_val,
+        gis_check_result=gis_status_val,
     )
     if not gis_result.inside_zone:
         await message.answer(
@@ -220,11 +228,11 @@ async def create_meeting_final(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Finalize meeting creation."""
-    data = await state.get_data()
+    meeting_data = await state.get_data()
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        params = _build_meeting_params(data, user.id)
-        await create_meeting(session=session, params=params)
+        meeting_params = _build_meeting_params(meeting_data, user.id)
+        await create_meeting(session=session, params=meeting_params)
     await message.answer("Встреча создана!")
     await state.clear()
 
@@ -232,11 +240,11 @@ async def create_meeting_final(
 @notifications_router.callback_query(F.data.startswith("meeting_"))
 async def meeting_detail(callback: types.CallbackQuery) -> None:
     """Show meeting details."""
-    data = callback.data
-    if data.startswith("meeting_confirm_"):
+    callback_data = callback.data
+    if callback_data.startswith("meeting_confirm_"):
         await _confirm_meeting(callback)
         return
-    if data.startswith("meeting_decline_"):
+    if callback_data.startswith("meeting_decline_"):
         await _decline_meeting(callback)
         return
     await _show_meeting_info(callback)
