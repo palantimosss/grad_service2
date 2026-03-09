@@ -1,4 +1,4 @@
-"""Tests for config module."""
+"""Tests for config module - base constants."""
 
 from bot.config import (
     ADMIN_IDS,

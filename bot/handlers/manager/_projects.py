@@ -4,26 +4,27 @@ import logging
 
 from aiogram import Router, types
 
-from bot.database.crud_modules.project_crud import (
-    assign_manager_to_project,
-    get_all_projects,
-    get_pending_projects,
-    get_project_by_id,
-    update_project_status,
-)
-from bot.database.crud_modules.user_crud import get_user_by_telegram_id
 from bot.database.database import get_session
 from bot.database.models.enums import ProjectStatus
-from bot.handlers.manager._projects_callbacks import (
+from bot.handlers.manager._projects_callbacks_funcs import (
     get_project_id_from_callback,
     get_project_id_from_status_callback,
     get_status_from_callback,
     is_all_projects,
     is_pending_projects,
     is_project_detail,
+)
+from bot.handlers.manager._projects_callbacks_imports import (
     is_project_status,
     is_set_status,
     is_yes_callback,
+)
+from bot.handlers.manager._projects_crud import (
+    assign_manager_to_project,
+    get_all_projects,
+    get_pending_projects,
+    get_project_by_id,
+    update_project_status,
 )
 from bot.handlers.manager._projects_helpers import (
     build_project_text,
@@ -33,6 +34,9 @@ from bot.handlers.manager._projects_keyboards import (
     get_project_actions_keyboard,
     get_projects_keyboard,
     get_yes_no_keyboard,
+)
+from bot.handlers.manager._projects_utils import (
+    get_user_by_telegram_id,
 )
 
 logger = logging.getLogger(__name__)
