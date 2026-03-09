@@ -72,24 +72,40 @@ async def project_detail(callback: types.CallbackQuery) -> None:
     """Show project details."""
     proj_id = get_project_id_from_callback(callback)
     async for session in get_session():
-        user = await get_user_by_telegram_id(session, callback.from_user.id)
-        project = await get_project_by_id(session, proj_id)
-        if not project:
-            await callback.answer("Проект не найден", show_alert=True)
-            return
-        status_text = get_status_text(project.status.value)
-        text = build_project_text(project, status_text)
-        if project.status == ProjectStatus.PENDING:
-            await callback.message.edit_text(
-                text, reply_markup=get_yes_no_keyboard(),
-            )
-        else:
-            await callback.message.edit_text(
-                text,
-                reply_markup=get_project_actions_keyboard(
-                    proj_id, user.role,
-                ),
-            )
+        await _show_project_detail(callback, session, proj_id)
+
+
+async def _show_project_detail(
+    callback: types.CallbackQuery,
+    session: object,
+    proj_id: int,
+) -> None:
+    """Show project detail in a session."""
+    user = await get_user_by_telegram_id(session, callback.from_user.id)
+    project = await get_project_by_id(session, proj_id)
+    if not project:
+        await callback.answer("Проект не найден", show_alert=True)
+        return
+    await _send_project_info(callback, project, user.role)
+
+
+def _send_project_info(
+    callback: types.CallbackQuery,
+    project: object,
+    user_role: str,
+) -> None:
+    """Send project info message."""
+    status_text = get_status_text(project.status.value)
+    text = build_project_text(project, status_text)
+    if project.status == ProjectStatus.PENDING:
+        callback.message.edit_text(
+            text, reply_markup=get_yes_no_keyboard(),
+        )
+    else:
+        keyboard = get_project_actions_keyboard(
+            project.id, user_role,
+        )
+        callback.message.edit_text(text, reply_markup=keyboard)
 
 
 @projects_router.callback_query(is_yes_callback)
