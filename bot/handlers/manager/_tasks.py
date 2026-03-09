@@ -4,7 +4,7 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 if TYPE_CHECKING:
     from aiogram.fsm.context import FSMContext
@@ -31,7 +31,6 @@ tasks_router = Router()
 _SKIP_OPTION = "пропустить"
 
 # Default values
-_DEFAULT_PRIORITY = 3
 _DEFAULT_TASK_PRIORITY = 3
 
 
@@ -77,7 +76,34 @@ def _build_task_params(
     return task_params
 
 
-@tasks_router.callback_query(F.data == "all_tasks")
+def _get_callback_data(callback: types.CallbackQuery) -> str:
+    """Get callback data string."""
+    return callback.data or ""
+
+
+def _get_project_id_from_callback(callback: types.CallbackQuery) -> int:
+    """Extract project ID from callback data."""
+    parts = _get_callback_data(callback).split("_")
+    return int(parts[2])
+
+
+async def _fetch_performers(session: object) -> list:
+    """Fetch performers from database."""
+    return await get_users_by_role(session, UserRole.PERFORMER)
+
+
+async def _create_task_in_db(
+    session: object,
+    user_id: int,
+    task_data: dict,
+    priority: int,
+) -> None:
+    """Create task in database."""
+    task_params = _build_task_params(task_data, user_id, priority)
+    await create_task(session=session, params=task_params)
+
+
+@tasks_router.callback_query(lambda c: c.data == "all_tasks")
 async def all_tasks(callback: types.CallbackQuery) -> None:
     """Show all tasks."""
     async for session in get_session():
@@ -90,13 +116,14 @@ async def all_tasks(callback: types.CallbackQuery) -> None:
         )
 
 
-@tasks_router.callback_query(F.data.startswith("create_task_"))
+@tasks_router.callback_query(
+    lambda c: c.data.startswith("create_task_"),
+)
 async def create_task_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:
     """Start task creation."""
-    parts = callback.data.split("_")
-    proj_id = int(parts[2])
+    proj_id = _get_project_id_from_callback(callback)
     await state.update_data(project_id=proj_id)
     await callback.message.edit_text(
         "Создание задачи.\nВведите название:",
@@ -112,6 +139,24 @@ async def task_title(message: types.Message, state: FSMContext) -> None:
     await state.set_state(TaskCreation.description)
 
 
+async def _handle_no_performers(
+    message: types.Message,
+    state: FSMContext,
+) -> bool:
+    """Handle case when no performers found. Returns True if should stop."""
+    async for session in get_session():
+        performers = await _fetch_performers(session)
+        if not performers:
+            await message.answer("Нет исполнителей.")
+            await state.clear()
+            return True
+        text = _build_performers_text(performers)
+        await message.answer(text)
+        await state.set_state(TaskCreation.performer)
+        return False
+    return True
+
+
 @tasks_router.message(TaskCreation.description)
 async def task_description(
     message: types.Message, state: FSMContext,
@@ -121,15 +166,9 @@ async def task_description(
     if message.text != _SKIP_OPTION:
         desc_val = message.text
     await state.update_data(description=desc_val)
-    async for session in get_session():
-        performers = await get_users_by_role(session, UserRole.PERFORMER)
-        if not performers:
-            await message.answer("Нет исполнителей.")
-            await state.clear()
-            return
-        text = _build_performers_text(performers)
-        await message.answer(text)
-        await state.set_state(TaskCreation.performer)
+    should_stop = await _handle_no_performers(message, state)
+    if should_stop:
+        return
 
 
 @tasks_router.message(TaskCreation.performer)
@@ -160,6 +199,17 @@ async def task_deadline(message: types.Message, state: FSMContext) -> None:
     await state.set_state(TaskCreation.priority)
 
 
+async def _finalize_task_creation(
+    message: types.Message,
+    task_data: dict,
+    priority: int,
+) -> None:
+    """Finalize task creation in database."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, message.from_user.id)
+        await _create_task_in_db(session, user.id, task_data, priority)
+
+
 @tasks_router.message(TaskCreation.priority)
 async def task_priority(message: types.Message, state: FSMContext) -> None:
     """Process task priority and create task."""
@@ -171,9 +221,6 @@ async def task_priority(message: types.Message, state: FSMContext) -> None:
             await message.answer("Введите число 1-5:")
             return
     task_data = await state.get_data()
-    async for session in get_session():
-        user = await get_user_by_telegram_id(session, message.from_user.id)
-        task_params = _build_task_params(task_data, user.id, priority_val)
-        await create_task(session=session, params=task_params)
+    await _finalize_task_creation(message, task_data, priority_val)
     await message.answer("Задача создана!")
     await state.clear()

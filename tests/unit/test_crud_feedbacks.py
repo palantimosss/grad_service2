@@ -14,6 +14,12 @@ _TEST_FEEDBACK_MESSAGE = "Great project!"
 _TEST_RATING = 5
 _EXPECTED_FEEDBACKS_COUNT = 2
 
+# Field keys
+_PROJECT_ID_KEY = "project_id"
+_AUTHOR_ID_KEY = "author_id"
+_MESSAGE_KEY = "message"
+_RATING_KEY = "rating"
+
 
 @pytest.mark.asyncio
 class TestFeedbackCRUD:
@@ -29,10 +35,10 @@ class TestFeedbackCRUD:
         feedback = await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": _TEST_FEEDBACK_MESSAGE,
-                "rating": _TEST_RATING,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: _TEST_FEEDBACK_MESSAGE,
+                _RATING_KEY: _TEST_RATING,
             },
         )
         assert feedback.message == _TEST_FEEDBACK_MESSAGE
@@ -48,10 +54,10 @@ class TestFeedbackCRUD:
         feedback = await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": _TEST_FEEDBACK_MESSAGE,
-                "rating": _TEST_RATING,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: _TEST_FEEDBACK_MESSAGE,
+                _RATING_KEY: _TEST_RATING,
             },
         )
         retrieved = await get_feedback_by_id(test_session, feedback.id)
@@ -68,19 +74,19 @@ class TestFeedbackCRUD:
         await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": "Feedback 1",
-                "rating": 4,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: "Feedback 1",
+                _RATING_KEY: 4,
             },
         )
         await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": "Feedback 2",
-                "rating": _TEST_RATING,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: "Feedback 2",
+                _RATING_KEY: _TEST_RATING,
             },
         )
         feedbacks = await get_feedbacks_by_project_id(
@@ -98,10 +104,10 @@ class TestFeedbackCRUD:
         feedback = await create_feedback(
             test_session,
             {
-                "project_id": test_project.id,
-                "author_id": test_user.id,
-                "message": _TEST_FEEDBACK_MESSAGE,
-                "rating": _TEST_RATING,
+                _PROJECT_ID_KEY: test_project.id,
+                _AUTHOR_ID_KEY: test_user.id,
+                _MESSAGE_KEY: _TEST_FEEDBACK_MESSAGE,
+                _RATING_KEY: _TEST_RATING,
             },
         )
         deleted = await delete_feedback(test_session, feedback.id)

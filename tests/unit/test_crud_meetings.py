@@ -26,6 +26,14 @@ _TEST_MINUTE = 0
 _TEST_MEETING_TITLE = "Test Meeting"
 _EXPECTED_MEETINGS_COUNT = 2
 
+# Field keys
+_PROJECT_ID_KEY = "project_id"
+_TITLE_KEY = "title"
+_ORGANIZER_ID_KEY = "organizer_id"
+_SCHEDULED_AT_KEY = "scheduled_at"
+_DURATION_MINUTES_KEY = "duration_minutes"
+_IS_ONLINE_KEY = "is_online"
+
 
 @pytest.mark.asyncio
 class TestMeetingCRUD:
@@ -41,15 +49,15 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
-                "duration_minutes": 60,
-                "is_online": True,
+                _DURATION_MINUTES_KEY: 60,
+                _IS_ONLINE_KEY: True,
             },
         )
         assert meeting.title == _TEST_MEETING_TITLE
@@ -65,10 +73,10 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -88,10 +96,10 @@ class TestMeetingCRUD:
         await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Meeting 1",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Meeting 1",
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -100,10 +108,10 @@ class TestMeetingCRUD:
         await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Meeting 2",
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Meeting 2",
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR + 1, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -124,10 +132,10 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -149,10 +157,10 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -173,10 +181,10 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),
@@ -201,10 +209,10 @@ class TestMeetingCRUD:
         meeting = await create_meeting(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_MEETING_TITLE,
-                "organizer_id": test_user.id,
-                "scheduled_at": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_MEETING_TITLE,
+                _ORGANIZER_ID_KEY: test_user.id,
+                _SCHEDULED_AT_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH, _TEST_DAY,
                     _TEST_HOUR, _TEST_MINUTE, tzinfo=UTC,
                 ),

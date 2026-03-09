@@ -21,6 +21,21 @@ from bot.database.models.enums import ProjectStatus, TaskStatus, UserRole
 _EXPECTED_DRAFT_PROJECTS_COUNT = 2
 _EXPECTED_CLIENT_USERS_COUNT = 2
 
+# Telegram ID base for test users
+_TELEGRAM_ID_BASE = 1000000000
+
+# Field keys
+_TITLE_KEY = "title"
+_CLIENT_ID_KEY = "client_id"
+_STATUS_KEY = "status"
+_PROJECT_ID_KEY = "project_id"
+_PRIORITY_KEY = "priority"
+_TELEGRAM_ID_KEY = "telegram_id"
+_USERNAME_KEY = "username"
+_FIRST_NAME_KEY = "first_name"
+_LAST_NAME_KEY = "last_name"
+_ROLE_KEY = "role"
+
 
 async def _create_project_for_stats(
     session: object,
@@ -31,9 +46,9 @@ async def _create_project_for_stats(
     return await create_project(
         session,
         {
-            "title": f"Stats Project {status.value}",
-            "client_id": client_id,
-            "status": status,
+            _TITLE_KEY: f"Stats Project {status.value}",
+            _CLIENT_ID_KEY: client_id,
+            _STATUS_KEY: status,
         },
     )
 
@@ -47,10 +62,10 @@ async def _create_task_for_stats(
     return await create_task(
         session,
         {
-            "project_id": project_id,
-            "title": f"Stats Task {status.value}",
-            "status": status,
-            "priority": 3,
+            _PROJECT_ID_KEY: project_id,
+            _TITLE_KEY: f"Stats Task {status.value}",
+            _STATUS_KEY: status,
+            _PRIORITY_KEY: 3,
         },
     )
 
@@ -58,17 +73,17 @@ async def _create_task_for_stats(
 async def _create_user_for_stats(
     session: object,
     role: UserRole,
-    telegram_id_base: int,
+    telegram_id_offset: int,
 ) -> object:
     """Create user for statistics tests."""
     return await create_user(
         session,
         {
-            "telegram_id": telegram_id_base,
-            "username": f"statsuser_{role.value}",
-            "first_name": "Stats",
-            "last_name": "User",
-            "role": role,
+            _TELEGRAM_ID_KEY: _TELEGRAM_ID_BASE + telegram_id_offset,
+            _USERNAME_KEY: f"statsuser_{role.value}",
+            _FIRST_NAME_KEY: "Stats",
+            _LAST_NAME_KEY: "User",
+            _ROLE_KEY: role,
         },
     )
 
@@ -118,13 +133,13 @@ class TestStatisticsCRUD:
     ) -> None:
         """Test getting users count by role."""
         await _create_user_for_stats(
-            test_session, UserRole.CLIENT, 1000000001,
+            test_session, UserRole.CLIENT, 1,
         )
         await _create_user_for_stats(
-            test_session, UserRole.CLIENT, 1000000002,
+            test_session, UserRole.CLIENT, 2,
         )
         await _create_user_for_stats(
-            test_session, UserRole.MANAGER, 1000000003,
+            test_session, UserRole.MANAGER, 3,
         )
         stats = await get_users_count_by_role(test_session)
         assert stats[UserRole.CLIENT] == _EXPECTED_CLIENT_USERS_COUNT
@@ -163,7 +178,7 @@ class TestStatisticsCRUD:
         """Test getting total users count."""
         initial = await get_total_users_count(test_session)
         await _create_user_for_stats(
-            test_session, UserRole.CLIENT, 1000000004,
+            test_session, UserRole.CLIENT, 4,
         )
         final = await get_total_users_count(test_session)
         assert final == initial + 1

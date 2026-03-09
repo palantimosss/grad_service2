@@ -18,7 +18,7 @@ from bot.database.crud_modules.user_crud import (
     UserUpdateParams,
 )
 
-__all__ = [
+__all__ = (
     "CompanyCreateParams",
     "DocumentCreateParams",
     "FeedbackCreateParams",
@@ -30,4 +30,4 @@ __all__ = [
     "TaskCreateParams",
     "UserCreateParams",
     "UserUpdateParams",
-]
+)

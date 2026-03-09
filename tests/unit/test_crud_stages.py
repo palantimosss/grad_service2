@@ -23,6 +23,14 @@ _TEST_DAY_END = 1
 _TEST_STAGE_TITLE = "Design Phase"
 _EXPECTED_STAGES_COUNT = 2
 
+# Field keys
+_PROJECT_ID_KEY = "project_id"
+_TITLE_KEY = "title"
+_ORDER_KEY = "order"
+_PLANNED_START_KEY = "planned_start"
+_PLANNED_END_KEY = "planned_end"
+_STATUS_KEY = "status"
+
 
 @pytest.mark.asyncio
 class TestStageCRUD:
@@ -37,14 +45,14 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_STAGE_TITLE,
-                "order": 1,
-                "planned_start": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_START, _TEST_DAY_START,
                     tzinfo=UTC,
                 ),
-                "planned_end": datetime(
+                _PLANNED_END_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_END, _TEST_DAY_END,
                     tzinfo=UTC,
                 ),
@@ -62,14 +70,14 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_STAGE_TITLE,
-                "order": 1,
-                "planned_start": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_START, _TEST_DAY_START,
                     tzinfo=UTC,
                 ),
-                "planned_end": datetime(
+                _PLANNED_END_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_END, _TEST_DAY_END,
                     tzinfo=UTC,
                 ),
@@ -88,10 +96,10 @@ class TestStageCRUD:
         await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Stage 1",
-                "order": 1,
-                "planned_start": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Stage 1",
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_START, _TEST_DAY_START,
                     tzinfo=UTC,
                 ),
@@ -100,10 +108,10 @@ class TestStageCRUD:
         await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": "Stage 2",
-                "order": 2,
-                "planned_start": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: "Stage 2",
+                _ORDER_KEY: 2,
+                _PLANNED_START_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_END, _TEST_DAY_END,
                     tzinfo=UTC,
                 ),
@@ -123,10 +131,10 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_STAGE_TITLE,
-                "order": 1,
-                "planned_start": datetime(
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
+                _PLANNED_START_KEY: datetime(
                     _TEST_YEAR, _TEST_MONTH_START, _TEST_DAY_START,
                     tzinfo=UTC,
                 ),
@@ -147,9 +155,9 @@ class TestStageCRUD:
         stage = await create_stage(
             test_session,
             {
-                "project_id": test_project.id,
-                "title": _TEST_STAGE_TITLE,
-                "order": 1,
+                _PROJECT_ID_KEY: test_project.id,
+                _TITLE_KEY: _TEST_STAGE_TITLE,
+                _ORDER_KEY: 1,
             },
         )
         deleted = await delete_stage(test_session, stage.id)

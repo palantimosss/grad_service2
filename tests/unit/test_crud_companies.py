@@ -16,6 +16,11 @@ _TEST_INN = "1234567890"
 _TEST_EMAIL = "test@company.com"
 _EXPECTED_COMPANIES_COUNT = 2
 
+# Field keys
+_NAME_KEY = "name"
+_INN_KEY = "inn"
+_EMAIL_KEY = "email"
+
 
 @pytest.mark.asyncio
 class TestClientCompanyCRUD:
@@ -29,9 +34,9 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": _TEST_COMPANY_NAME,
-                "inn": _TEST_INN,
-                "email": _TEST_EMAIL,
+                _NAME_KEY: _TEST_COMPANY_NAME,
+                _INN_KEY: _TEST_INN,
+                _EMAIL_KEY: _TEST_EMAIL,
             },
         )
         assert company.name == _TEST_COMPANY_NAME
@@ -45,8 +50,8 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": _TEST_COMPANY_NAME,
-                "inn": _TEST_INN,
+                _NAME_KEY: _TEST_COMPANY_NAME,
+                _INN_KEY: _TEST_INN,
             },
         )
         retrieved = await get_company_by_id(test_session, company.id)
@@ -60,11 +65,11 @@ class TestClientCompanyCRUD:
         """Test getting all companies."""
         await create_company(
             test_session,
-            {"name": "Company 1"},
+            {_NAME_KEY: "Company 1"},
         )
         await create_company(
             test_session,
-            {"name": "Company 2"},
+            {_NAME_KEY: "Company 2"},
         )
         companies = await get_all_companies(test_session)
         assert len(companies) == _EXPECTED_COMPANIES_COUNT
@@ -77,14 +82,14 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": _TEST_COMPANY_NAME,
-                "inn": _TEST_INN,
+                _NAME_KEY: _TEST_COMPANY_NAME,
+                _INN_KEY: _TEST_INN,
             },
         )
         updated = await update_company(
             test_session,
             company.id,
-            {"email": "new@company.com"},
+            {_EMAIL_KEY: "new@company.com"},
         )
         assert updated is not None
         assert updated.email == "new@company.com"
@@ -97,8 +102,8 @@ class TestClientCompanyCRUD:
         company = await create_company(
             test_session,
             {
-                "name": _TEST_COMPANY_NAME,
-                "inn": _TEST_INN,
+                _NAME_KEY: _TEST_COMPANY_NAME,
+                _INN_KEY: _TEST_INN,
             },
         )
         deleted = await delete_company(test_session, company.id)

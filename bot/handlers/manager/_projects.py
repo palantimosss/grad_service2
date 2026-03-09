@@ -2,7 +2,7 @@
 
 import logging
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 from bot.database.crud_modules.project_crud import (
     assign_manager_to_project,
@@ -35,75 +35,89 @@ _STATUS_MAP = (
     ("archived", "Архив"),
 )
 
-# String length limits
-_TITLE_LIMIT = 50
-_NAME_LIMIT = 30
-
 
 def _get_status_text(status_value: str) -> str:
     """Get status text from status value."""
-    for key, value in _STATUS_MAP:
+    for key, label in _STATUS_MAP:
         if key == status_value:
-            return value
+            return label
     return status_value
 
 
 def _build_project_text(project: object, status_text: str) -> str:
     """Build project detail text."""
-    client_name = "Не назначен"
-    if project.client:
-        client_name = project.client.first_name
-    manager_name = "Не назначен"
-    if project.manager:
-        manager_name = project.manager.first_name
-    desc_val = project.description or "Нет"
-    deadline_val = project.deadline or "Не установлен"
-    budget_val = project.budget or "Не указан"
-    lines = [
+    client_name = (
+        project.client.first_name if project.client else "Не назначен"
+    )
+    manager_name = (
+        project.manager.first_name if project.manager else "Не назначен"
+    )
+    return "\n".join([
         f"<b>{project.title}</b>",
         "",
         f"Статус: {status_text}",
         f"Клиент: {client_name}",
         f"Руководитель: {manager_name}",
-        f"Описание: {desc_val}",
-        f"Дедлайн: {deadline_val}",
-        f"Бюджет: {budget_val}",
-    ]
-    return "\n".join(lines)
+        f"Описание: {project.description or 'Нет'}",
+        f"Дедлайн: {project.deadline or 'Не установлен'}",
+        f"Бюджет: {project.budget or 'Не указан'}",
+    ])
 
 
-@projects_router.callback_query(F.data == "all_projects")
+def _get_callback_data(callback: types.CallbackQuery) -> str:
+    """Get callback data string."""
+    return callback.data or ""
+
+
+def _get_project_id_from_callback(callback: types.CallbackQuery) -> int:
+    """Extract project ID from callback data."""
+    parts = _get_callback_data(callback).split("_")
+    return int(parts[1])
+
+
+def _get_project_id_from_status_callback(callback: types.CallbackQuery) -> int:
+    """Extract project ID from status callback data."""
+    parts = _get_callback_data(callback).split("_")
+    return int(parts[2])
+
+
+def _get_status_from_callback(callback: types.CallbackQuery) -> ProjectStatus:
+    """Extract status from callback data."""
+    parts = _get_callback_data(callback).split("_")
+    return ProjectStatus(parts[3])
+
+
+@projects_router.callback_query(lambda c: c.data == "all_projects")
 async def all_projects(callback: types.CallbackQuery) -> None:
     """Show all projects."""
     async for session in get_session():
-        projects = await get_all_projects(session)
-        if not projects:
+        projects_list = await get_all_projects(session)
+        if not projects_list:
             await callback.message.edit_text("Проектов нет.")
             return
         await callback.message.edit_text(
-            "Все проекты:", reply_markup=get_projects_keyboard(projects),
+            "Все проекты:", reply_markup=get_projects_keyboard(projects_list),
         )
 
 
-@projects_router.callback_query(F.data == "pending_projects")
+@projects_router.callback_query(lambda c: c.data == "pending_projects")
 async def pending_projects(callback: types.CallbackQuery) -> None:
     """Show pending projects."""
     async for session in get_session():
-        projects = await get_pending_projects(session)
-        if not projects:
+        projects_list = await get_pending_projects(session)
+        if not projects_list:
             await callback.message.edit_text("Заявок на регистрацию нет.")
             return
         await callback.message.edit_text(
             "Заявки на регистрацию:",
-            reply_markup=get_projects_keyboard(projects),
+            reply_markup=get_projects_keyboard(projects_list),
         )
 
 
-@projects_router.callback_query(F.data.startswith("project_"))
+@projects_router.callback_query(lambda c: c.data.startswith("project_"))
 async def project_detail(callback: types.CallbackQuery) -> None:
     """Show project details."""
-    parts = callback.data.split("_")
-    proj_id = int(parts[1])
+    proj_id = _get_project_id_from_callback(callback)
     async for session in get_session():
         user = await get_user_by_telegram_id(session, callback.from_user.id)
         project = await get_project_by_id(session, proj_id)
@@ -125,37 +139,37 @@ async def project_detail(callback: types.CallbackQuery) -> None:
             )
 
 
-@projects_router.callback_query(F.data == "yes")
+@projects_router.callback_query(lambda c: c.data == "yes")
 async def register_project(callback: types.CallbackQuery) -> None:
     """Register pending project."""
     async for session in get_session():
         user = await get_user_by_telegram_id(session, callback.from_user.id)
-        projects = await get_pending_projects(session)
-        if projects:
-            project = projects[0]
+        projects_list = await get_pending_projects(session)
+        if projects_list:
+            project = projects_list[0]
             await assign_manager_to_project(session, project.id, user.id)
             await callback.message.edit_text(
                 f"Проект '{project.title}' зарегистрирован.",
             )
 
 
-@projects_router.callback_query(F.data.startswith("project_status_"))
+@projects_router.callback_query(
+    lambda c: c.data.startswith("project_status_"),
+)
 async def change_status_start(callback: types.CallbackQuery) -> None:
     """Start changing project status."""
-    parts = callback.data.split("_")
-    proj_id = int(parts[2])
+    proj_id = _get_project_id_from_status_callback(callback)
     await callback.message.edit_text(
         "Выберите новый статус проекта:",
         reply_markup=get_project_actions_keyboard(proj_id),
     )
 
 
-@projects_router.callback_query(F.data.startswith("set_status_"))
+@projects_router.callback_query(lambda c: c.data.startswith("set_status_"))
 async def set_project_status(callback: types.CallbackQuery) -> None:
     """Set project status."""
-    parts = callback.data.split("_")
-    proj_id = int(parts[2])
-    status = ProjectStatus(parts[3])
+    proj_id = _get_project_id_from_status_callback(callback)
+    status = _get_status_from_callback(callback)
     async for session in get_session():
         await update_project_status(session, proj_id, status)
     await callback.message.edit_text(

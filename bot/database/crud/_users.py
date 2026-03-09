@@ -1,8 +1,6 @@
 """User CRUD operations."""
 
 from bot.database.crud_modules.user_crud import (
-    UserCreateParams,
-    UserUpdateParams,
     create_user,
     delete_user,
     get_all_users,
@@ -13,9 +11,7 @@ from bot.database.crud_modules.user_crud import (
     update_user_role,
 )
 
-__all__ = [
-    "UserCreateParams",
-    "UserUpdateParams",
+__all__ = (
     "create_user",
     "delete_user",
     "get_all_users",
@@ -24,4 +20,4 @@ __all__ = [
     "get_users_by_role",
     "update_user_profile",
     "update_user_role",
-]
+)

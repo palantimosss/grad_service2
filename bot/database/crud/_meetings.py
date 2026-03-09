@@ -17,7 +17,7 @@ from bot.database.crud_modules.meeting_crud import (
     update_participant_status,
 )
 
-__all__ = [
+__all__ = (
     "GISLogCreateParams",
     "MeetingCreateParams",
     "add_meeting_participant",
@@ -30,4 +30,4 @@ __all__ = [
     "get_meetings_by_project_id",
     "update_meeting_status",
     "update_participant_status",
-]
+)

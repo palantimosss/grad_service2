@@ -24,6 +24,12 @@ _TEST_ADDRESS = "Test Address"
 _TEST_COORDINATES = "30.3158,59.9391"
 _EXPECTED_LOGS_COUNT = 2
 
+# Field keys
+_MEETING_ID_KEY = "meeting_id"
+_ADDRESS_KEY = "address"
+_COORDINATES_KEY = "coordinates"
+_INSIDE_ZONE_KEY = "inside_zone"
+
 
 @pytest.mark.asyncio
 class TestGISLogCRUD:
@@ -51,10 +57,10 @@ class TestGISLogCRUD:
         log = await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": _TEST_ADDRESS,
-                "coordinates": _TEST_COORDINATES,
-                "inside_zone": True,
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: _TEST_ADDRESS,
+                _COORDINATES_KEY: _TEST_COORDINATES,
+                _INSIDE_ZONE_KEY: True,
             },
         )
         assert log.address == _TEST_ADDRESS
@@ -82,19 +88,19 @@ class TestGISLogCRUD:
         await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": "Address 1",
-                "coordinates": _TEST_COORDINATES,
-                "inside_zone": True,
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: "Address 1",
+                _COORDINATES_KEY: _TEST_COORDINATES,
+                _INSIDE_ZONE_KEY: True,
             },
         )
         await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": "Address 2",
-                "coordinates": _TEST_COORDINATES,
-                "inside_zone": False,
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: "Address 2",
+                _COORDINATES_KEY: _TEST_COORDINATES,
+                _INSIDE_ZONE_KEY: False,
             },
         )
         logs = await get_gis_logs_by_meeting_id(
@@ -124,10 +130,10 @@ class TestGISLogCRUD:
         log = await create_gis_check_log(
             test_session,
             {
-                "meeting_id": meeting.id,
-                "address": _TEST_ADDRESS,
-                "coordinates": _TEST_COORDINATES,
-                "inside_zone": True,
+                _MEETING_ID_KEY: meeting.id,
+                _ADDRESS_KEY: _TEST_ADDRESS,
+                _COORDINATES_KEY: _TEST_COORDINATES,
+                _INSIDE_ZONE_KEY: True,
             },
         )
         deleted = await delete_gis_log(test_session, log.id)
