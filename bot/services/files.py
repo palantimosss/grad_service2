@@ -1,7 +1,7 @@
 """Files service module."""
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from aiogram.types import FSInputFile
 
@@ -24,6 +24,19 @@ if TYPE_CHECKING:
     from bot.database.models.enums import DocumentType
 
 
+class DocumentServiceParams(TypedDict, total=False):
+    """Parameters for document service."""
+
+    project_id: int
+    file_path: str
+    file_name: str
+    file_size: int
+    document_type: DocumentType
+    uploaded_by: int
+    task_id: int | None
+    description: str | None
+
+
 async def save_file(
     file_id: str,
     file_name: str,
@@ -43,28 +56,12 @@ async def save_file(
 
 async def create_document_service(
     session: AsyncSession,
-    project_id: int,
-    file_path: str,
-    file_name: str,
-    file_size: int,
-    document_type: DocumentType,
-    uploaded_by: int,
-    task_id: int | None = None,
-    description: str | None = None,
+    document_data: DocumentServiceParams,
 ) -> Document | None:
     """Create document record in database."""
     return await create_document_db(
         session=session,
-        params={
-            "project_id": project_id,
-            "file_path": file_path,
-            "file_name": file_name,
-            "file_size": file_size,
-            "document_type": document_type,
-            "uploaded_by": uploaded_by,
-            "task_id": task_id,
-            "description": description,
-        },
+        params=document_data,
     )
 
 

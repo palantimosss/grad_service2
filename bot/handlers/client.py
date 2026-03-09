@@ -37,19 +37,27 @@ logger = logging.getLogger(__name__)
 
 client_router = Router()
 
-# Status map for display
-_STATUS_MAP = {
-    "draft": "Черновик",
-    "pending": "На регистрации",
-    "registered": "Зарегистрирован",
-    "in_progress": "В работе",
-    "on_hold": "Приостановлен",
-    "completed": "Завершён",
-    "archived": "Архив",
-}
+# Status map for display (immutable tuple)
+_STATUS_MAP = (
+    ("draft", "Черновик"),
+    ("pending", "На регистрации"),
+    ("registered", "Зарегистрирован"),
+    ("in_progress", "В работе"),
+    ("on_hold", "Приостановлен"),
+    ("completed", "Завершён"),
+    ("archived", "Архив"),
+)
 
 # Skip option text
 _SKIP_OPTION = "пропустить"
+
+
+def _get_status_text(status_value: str) -> str:
+    """Get status text from status value."""
+    for key, value in _STATUS_MAP:
+        if key == status_value:
+            return value
+    return status_value
 
 
 def _parse_deadline(text: str) -> datetime | None:
@@ -79,18 +87,42 @@ def _build_project_params(
     user_id: int,
 ) -> ProjectCreateParams:
     """Build project creation params."""
-    params: ProjectCreateParams = {
+    project_params: ProjectCreateParams = {
         "title": project_data["title"],
         "client_id": user_id,
         "status": ProjectStatus.PENDING,
     }
     if project_data.get("description"):
-        params["description"] = project_data["description"]
+        project_params["description"] = project_data["description"]
     if project_data.get("deadline"):
-        params["deadline"] = project_data["deadline"]
+        project_params["deadline"] = project_data["deadline"]
     if project_data.get("budget") is not None:
-        params["budget"] = project_data["budget"]
-    return params
+        project_params["budget"] = project_data["budget"]
+    return project_params
+
+
+def _format_project_text(project: object) -> str:
+    """Format project details as text."""
+    status_text = _get_status_text(
+        project.status.value,  # type: ignore[union-attr]
+    )
+    description_val = (
+        project.description or "Нет"  # type: ignore[union-attr]
+    )
+    deadline_val = (
+        project.deadline or "Не установлен"  # type: ignore[union-attr]
+    )
+    budget_val = (
+        project.budget or "Не указан"  # type: ignore[union-attr]
+    )
+    return "\n".join([
+        f"<b>{project.title}</b>",  # type: ignore[union-attr]
+        "",
+        f"Статус: {status_text}",
+        f"Описание: {description_val}",
+        f"Дедлайн: {deadline_val}",
+        f"Бюджет: {budget_val}",
+    ])
 
 
 @client_router.callback_query(F.data == "my_projects")
@@ -184,8 +216,8 @@ async def project_budget(
     project_data = await state.get_data()
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        params = _build_project_params(project_data, user.id)
-        await create_project(session=session, params=params)
+        project_params = _build_project_params(project_data, user.id)
+        await create_project(session=session, params=project_params)
     await message.answer(
         "Проект создан и отправлен на регистрацию!",
         reply_markup=get_back_keyboard("my_projects"),
@@ -203,22 +235,7 @@ async def project_detail(callback: types.CallbackQuery) -> None:
         if not project:
             await callback.answer("Проект не найден", show_alert=True)
             return
-        status_text = _STATUS_MAP.get(
-            project.status.value, project.status.value,
-        )
-        status_label = "Статус"
-        desc_label = "Описание"
-        deadline_label = "Дедлайн"
-        budget_label = "Бюджет"
-        lines = [
-            f"<b>{project.title}</b>",
-            "",
-            f"{status_label}: {status_text}",
-            f"{desc_label}: {project.description or 'Нет'}",
-            f"{deadline_label}: {project.deadline or 'Не установлен'}",
-            f"{budget_label}: {project.budget or 'Не указан'}",
-        ]
-        text = "\n".join(lines)
+        text = _format_project_text(project)
         await callback.message.edit_text(
             text,
             reply_markup=get_project_actions_keyboard(project_id, user.role),
@@ -250,7 +267,7 @@ async def upload_doc_file(
         file_path_obj = await message.bot.get_file(document_file.file_id)
         dest = f"data/files/{project_id}_{file_name}"
         await message.bot.download_file(file_path_obj.file_path, dest)
-        params: DocumentCreateParams = {
+        doc_params: DocumentCreateParams = {
             "project_id": project_id,
             "file_path": dest,
             "file_name": file_name,
@@ -258,7 +275,7 @@ async def upload_doc_file(
             "document_type": DocumentType.SOURCE,
             "uploaded_by": user.id,
         }
-        await create_document(session=session, params=params)
+        await create_document(session=session, params=doc_params)
     await message.answer(
         "Документ загружен!",
         reply_markup=get_back_keyboard(f"project_{project_id}"),
@@ -286,13 +303,13 @@ async def feedback_message(
     project_id = state_data.get("project_id")
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        params: FeedbackCreateParams = {
+        feedback_params: FeedbackCreateParams = {
             "project_id": project_id,
             "author_id": user.id,
             "message": message.text,
             "rating": None,
         }
-        await create_feedback(session=session, params=params)
+        await create_feedback(session=session, params=feedback_params)
     await message.answer(
         "Спасибо за ваш отзыв!",
         reply_markup=get_back_keyboard(f"project_{project_id}"),

@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 common_router = Router()
 
-# Field name mappings for profile editing
-_FIELD_NAMES = {
-    "phone": "телефон",
-    "email": "email",
-    "position": "должность",
-}
+# Field name mappings for profile editing (immutable tuple)
+_FIELD_NAMES = (
+    ("phone", "телефон"),
+    ("email", "email"),
+    ("position", "должность"),
+)
 
 # Field keys
 _PHONE_KEY = "phone"
@@ -54,39 +54,45 @@ HELP_TEXT = (
 )
 
 
+def _get_field_label(field_key: str) -> str:
+    """Get field label from field key."""
+    for key, label in _FIELD_NAMES:
+        if key == field_key:
+            return label
+    return field_key
+
+
 def _build_profile_text(user: object) -> str:
     """Build profile text from user object."""
-    last = user.last_name or ""
-    phone_val = user.phone or "Не указан"
-    email_val = user.email or "Не указан"
-    position_val = user.position or "Не указана"
-    phone_label = "Телефон"
-    email_label = "Email"
-    position_label = "Должность"
-    lines = [
+    last_name = user.last_name or ""  # type: ignore[union-attr]
+    phone_val = user.phone or "Не указан"  # type: ignore[union-attr]
+    email_val = user.email or "Не указан"  # type: ignore[union-attr]
+    position_val = user.position or "Не указана"  # type: ignore[union-attr]
+    first_name = user.first_name  # type: ignore[union-attr]
+    role_val = user.role.value  # type: ignore[union-attr]
+    return "\n".join([
         "<b>Профиль</b>",
         "",
-        f"Имя: {user.first_name} {last}",
-        f"Роль: {user.role.value}",
-        f"{phone_label}: {phone_val}",
-        f"{email_label}: {email_val}",
-        f"{position_label}: {position_val}",
-    ]
-    return "\n".join(lines)
+        f"Имя: {first_name} {last_name}",
+        f"Роль: {role_val}",
+        f"Телефон: {phone_val}",
+        f"Email: {email_val}",
+        f"Должность: {position_val}",
+    ])
 
 
 def _get_update_params(
     profile_data: dict, position_val: str,
 ) -> UserUpdateParams:
     """Get user update params from data."""
-    params: UserUpdateParams = {}
+    update_params: UserUpdateParams = {}
     if profile_data.get(_PHONE_KEY):
-        params[_PHONE_KEY] = profile_data[_PHONE_KEY]
+        update_params[_PHONE_KEY] = profile_data[_PHONE_KEY]
     if profile_data.get(_EMAIL_KEY):
-        params[_EMAIL_KEY] = profile_data[_EMAIL_KEY]
+        update_params[_EMAIL_KEY] = profile_data[_EMAIL_KEY]
     if position_val and position_val != "пропустить":
-        params[_POSITION_KEY] = position_val
-    return params
+        update_params[_POSITION_KEY] = position_val
+    return update_params
 
 
 @common_router.message(CommandStart())
@@ -258,9 +264,9 @@ async def edit_field(
     """Edit specific profile field."""
     field = callback.data.split("_")[1]
     await state.update_data(edit_field=field)
-    field_name = _FIELD_NAMES.get(field, field)
+    field_label = _get_field_label(field)
     await callback.message.edit_text(
-        f"Введите новое значение для поля '{field_name}':",
+        f"Введите новое значение для поля '{field_label}':",
     )
     await state.set_state(ProfileEdit.field_value)
 

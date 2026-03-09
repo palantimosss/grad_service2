@@ -56,22 +56,30 @@ logger = logging.getLogger(__name__)
 
 manager_router = Router()
 
-# Status map for display
-_STATUS_MAP = {
-    "draft": "Черновик",
-    "pending": "На регистрации",
-    "registered": "Зарегистрирован",
-    "in_progress": "В работе",
-    "on_hold": "Приостановлен",
-    "completed": "Завершён",
-    "archived": "Архив",
-}
+# Status map for display (immutable tuple)
+_STATUS_MAP = (
+    ("draft", "Черновик"),
+    ("pending", "На регистрации"),
+    ("registered", "Зарегистрирован"),
+    ("in_progress", "В работе"),
+    ("on_hold", "Приостановлен"),
+    ("completed", "Завершён"),
+    ("archived", "Архив"),
+)
 
 # Skip option text
 _SKIP_OPTION = "пропустить"
 
-# Field keys for company
-_COMPANY_FIELDS = ["inn", "kpp", "address", "phone", "email", "website"]
+# Field keys for company (immutable tuple)
+_COMPANY_FIELDS = ("inn", "kpp", "address", "phone", "email", "website")
+
+
+def _get_status_text(status_value: str) -> str:
+    """Get status text from status value."""
+    for key, value in _STATUS_MAP:
+        if key == status_value:
+            return value
+    return status_value
 
 
 def _build_project_text(project: object, status_text: str) -> str:
@@ -155,7 +163,7 @@ def _build_task_params(
     priority: int,
 ) -> TaskCreateParams:
     """Build task creation params."""
-    params: TaskCreateParams = {
+    task_params: TaskCreateParams = {
         "project_id": task_data["project_id"],
         "title": task_data["title"],
         "performer_id": task_data.get("performer_id"),
@@ -164,37 +172,37 @@ def _build_task_params(
         "status": TaskStatus.PENDING,
     }
     if task_data.get("description"):
-        params["description"] = task_data["description"]
+        task_params["description"] = task_data["description"]
     if task_data.get("deadline"):
-        params["deadline"] = task_data["deadline"]
-    return params
+        task_params["deadline"] = task_data["deadline"]
+    return task_params
 
 
 def _build_stage_params(stage_data: dict) -> StageCreateParams:
     """Build stage creation params."""
-    params: StageCreateParams = {
+    stage_params: StageCreateParams = {
         "project_id": stage_data["project_id"],
         "title": stage_data["title"],
         "order": stage_data["order"],
     }
     if stage_data.get("description"):
-        params["description"] = stage_data["description"]
+        stage_params["description"] = stage_data["description"]
     if stage_data.get("planned_start"):
-        params["planned_start"] = stage_data["planned_start"]
+        stage_params["planned_start"] = stage_data["planned_start"]
     if stage_data.get("planned_end"):
-        params["planned_end"] = stage_data["planned_end"]
-    return params
+        stage_params["planned_end"] = stage_data["planned_end"]
+    return stage_params
 
 
 def _build_company_params(company_data: dict) -> CompanyCreateParams:
     """Build company creation params."""
-    params: CompanyCreateParams = {"name": company_data["name"]}
+    company_params: CompanyCreateParams = {"name": company_data["name"]}
     for field_key in _COMPANY_FIELDS:
         if company_data.get(field_key):
-            params[field_key] = company_data[
+            company_params[field_key] = company_data[
                 field_key
             ]  # type: ignore[literal-required]
-    return params
+    return company_params
 
 
 @manager_router.callback_query(F.data == "all_projects")
@@ -234,9 +242,7 @@ async def project_detail(callback: types.CallbackQuery) -> None:
         if not project:
             await callback.answer("Проект не найден", show_alert=True)
             return
-        status_text = _STATUS_MAP.get(
-            project.status.value, project.status.value,
-        )
+        status_text = _get_status_text(project.status.value)
         text = _build_project_text(project, status_text)
         if project.status == ProjectStatus.PENDING:
             await callback.message.edit_text(
@@ -371,8 +377,8 @@ async def task_priority(message: types.Message, state: FSMContext) -> None:
     task_data = await state.get_data()
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        params = _build_task_params(task_data, user.id, priority_val)
-        await create_task(session=session, params=params)
+        task_params = _build_task_params(task_data, user.id, priority_val)
+        await create_task(session=session, params=task_params)
     await message.answer("Задача создана!")
     await state.clear()
 
@@ -455,8 +461,8 @@ async def stage_end_date(
         return
     stage_data = await state.get_data()
     async for session in get_session():
-        params = _build_stage_params(stage_data)
-        await create_stage(session=session, params=params)
+        stage_params = _build_stage_params(stage_data)
+        await create_stage(session=session, params=stage_params)
     await message.answer("Этап создан!")
     await state.clear()
 
@@ -562,8 +568,8 @@ async def company_website(
     await state.update_data(website=website_val)
     company_data = await state.get_data()
     async for session in get_session():
-        params = _build_company_params(company_data)
-        await create_company(session=session, params=params)
+        company_params = _build_company_params(company_data)
+        await create_company(session=session, params=company_params)
     await message.answer("Клиент добавлен!")
     await state.clear()
 

@@ -1,5 +1,11 @@
 """CRUD operations aggregator."""
 
+# This is an aggregator module by design - it re-exports all CRUD operations
+# WPS203: 80 imported names > 50 (aggregator purpose)
+# WPS235: multiple imports from submodules > 8 (aggregator purpose)
+# WPS410: __all__ is standard Python for public API
+# WPS412: __init__.py with imports is standard for packages
+
 from bot.database.crud._companies import (
     CompanyCreateParams,
     create_company,

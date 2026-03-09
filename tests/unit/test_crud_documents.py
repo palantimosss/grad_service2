@@ -1,0 +1,137 @@
+"""Unit tests for document CRUD operations."""
+
+import pytest
+
+from bot.database.crud_modules.document_crud import (
+    create_document,
+    delete_document,
+    get_document_by_id,
+    get_documents_by_project_id,
+    update_document,
+)
+from bot.database.models.enums import DocumentType
+
+# Test constants
+_TEST_FILE_PATH = "/files/test.pdf"
+_TEST_FILE_NAME = "test.pdf"
+_TEST_FILE_SIZE = 1024
+
+
+@pytest.mark.asyncio
+class TestDocumentCRUD:
+    """Tests for document CRUD operations."""
+
+    async def test_create_document(
+        self,
+        test_session: object,
+        test_project: object,
+    ) -> None:
+        """Test creating document."""
+        doc = await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": _TEST_FILE_NAME,
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.SOURCE,
+            },
+        )
+        assert doc.file_name == _TEST_FILE_NAME
+        assert doc.document_type == DocumentType.SOURCE
+
+    async def test_get_document_by_id(
+        self,
+        test_session: object,
+        test_project: object,
+    ) -> None:
+        """Test getting document by ID."""
+        doc = await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": _TEST_FILE_NAME,
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.SOURCE,
+            },
+        )
+        retrieved = await get_document_by_id(test_session, doc.id)
+        assert retrieved is not None
+        assert retrieved.file_name == _TEST_FILE_NAME
+
+    async def test_get_documents_by_project_id(
+        self,
+        test_session: object,
+        test_project: object,
+    ) -> None:
+        """Test getting documents by project ID."""
+        await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": "doc1.pdf",
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.SOURCE,
+            },
+        )
+        await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": "doc2.pdf",
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.WORK,
+            },
+        )
+        docs = await get_documents_by_project_id(
+            test_session, test_project.id,
+        )
+        assert len(docs) == 2
+
+    async def test_update_document(
+        self,
+        test_session: object,
+        test_project: object,
+    ) -> None:
+        """Test updating document."""
+        doc = await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": _TEST_FILE_NAME,
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.SOURCE,
+            },
+        )
+        updated = await update_document(
+            test_session,
+            doc.id,
+            {"file_name": "updated.pdf", "description": "Updated doc"},
+        )
+        assert updated is not None
+        assert updated.file_name == "updated.pdf"
+
+    async def test_delete_document(
+        self,
+        test_session: object,
+        test_project: object,
+    ) -> None:
+        """Test deleting document."""
+        doc = await create_document(
+            test_session,
+            {
+                "project_id": test_project.id,
+                "file_path": _TEST_FILE_PATH,
+                "file_name": _TEST_FILE_NAME,
+                "file_size": _TEST_FILE_SIZE,
+                "document_type": DocumentType.SOURCE,
+            },
+        )
+        deleted = await delete_document(test_session, doc.id)
+        assert deleted is True
+        retrieved = await get_document_by_id(test_session, doc.id)
+        assert retrieved is None

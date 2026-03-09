@@ -285,12 +285,14 @@ class TestFilesService:
         """Test creating document through service."""
         doc = await create_document_service(
             session=test_session,
-            project_id=test_project.id,
-            file_path="/files/test.pdf",
-            file_name="test.pdf",
-            file_size=1024,
-            document_type=DocumentType.SOURCE,
-            uploaded_by=test_user.id,
+            document_data={
+                "project_id": test_project.id,
+                "file_path": "/files/test.pdf",
+                "file_name": "test.pdf",
+                "file_size": 1024,
+                "document_type": DocumentType.SOURCE,
+                "uploaded_by": test_user.id,
+            },
         )
         assert doc is not None
         assert doc.file_name == "test.pdf"
@@ -304,12 +306,14 @@ class TestFilesService:
         """Test deleting document through service."""
         doc = await create_document_service(
             session=test_session,
-            project_id=test_project.id,
-            file_path="/files/test_delete.pdf",
-            file_name="test_delete.pdf",
-            file_size=1024,
-            document_type=DocumentType.SOURCE,
-            uploaded_by=test_user.id,
+            document_data={
+                "project_id": test_project.id,
+                "file_path": "/files/test_delete.pdf",
+                "file_name": "test_delete.pdf",
+                "file_size": 1024,
+                "document_type": DocumentType.SOURCE,
+                "uploaded_by": test_user.id,
+            },
         )
         assert doc is not None
 

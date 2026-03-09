@@ -31,22 +31,30 @@ logger = logging.getLogger(__name__)
 
 notifications_router = Router()
 
-# Status map for display
-_STATUS_MAP = {
-    "pending": "Ожидает",
-    "confirmed": "Подтверждена",
-    "cancelled": "Отменена",
-    "completed": "Завершена",
-}
+# Status map for display (immutable tuple)
+_STATUS_MAP = (
+    ("pending", "Ожидает"),
+    ("confirmed", "Подтверждена"),
+    ("cancelled", "Отменена"),
+    ("completed", "Завершена"),
+)
 
-# Optional meeting fields
-_OPTIONAL_MEETING_FIELDS = [
+# Optional meeting fields (immutable tuple)
+_OPTIONAL_MEETING_FIELDS = (
     "description",
     "address",
     "coordinates",
     "online_link",
     "gis_check_result",
-]
+)
+
+
+def _get_status_text(status_value: str) -> str:
+    """Get status text from status value."""
+    for key, value in _STATUS_MAP:
+        if key == status_value:
+            return value
+    return status_value
 
 
 def _parse_datetime(text: str) -> datetime | None:
@@ -71,7 +79,7 @@ def _build_meeting_params(
     meeting_data: dict, user_id: int,
 ) -> MeetingCreateParams:
     """Build meeting creation params."""
-    params: MeetingCreateParams = {
+    meeting_params: MeetingCreateParams = {
         "project_id": meeting_data["project_id"],
         "title": meeting_data["title"],
         "organizer_id": user_id,
@@ -80,8 +88,8 @@ def _build_meeting_params(
         "is_online": meeting_data.get("is_online", False),
     }
     for field_key in _OPTIONAL_MEETING_FIELDS:
-        _add_optional_param(params, meeting_data, field_key)
-    return params
+        _add_optional_param(meeting_params, meeting_data, field_key)
+    return meeting_params
 
 
 def _build_meeting_text(meeting: object) -> str:
@@ -89,19 +97,15 @@ def _build_meeting_text(meeting: object) -> str:
     format_label = "Онлайн" if meeting.is_online else "Офлайн"
     location = meeting.online_link if meeting.is_online else meeting.address
     loc_text = location or "Не указана"
-    status_text = _STATUS_MAP.get(meeting.status.value, meeting.status.value)
-    format_str = "Формат"
-    loc_label = "Локация"
-    date_label = "Дата"
-    duration_label = "Длительность"
+    status_text = _get_status_text(meeting.status.value)
     lines = [
         f"<b>{meeting.title}</b>",
         "",
         f"Статус: {status_text}",
-        f"{format_str}: {format_label}",
-        f"{loc_label}: {loc_text}",
-        f"{date_label}: {meeting.scheduled_at}",
-        f"{duration_label}: {meeting.duration_minutes} мин",
+        f"Формат: {format_label}",
+        f"Локация: {loc_text}",
+        f"Дата: {meeting.scheduled_at}",
+        f"Длительность: {meeting.duration_minutes} мин",
     ]
     return "\n".join(lines)
 
@@ -195,6 +199,16 @@ async def meeting_online_link(
     await create_meeting_final(message, state)
 
 
+def _format_coordinates(coordinates: tuple) -> str:
+    """Format coordinates as string."""
+    return f"{coordinates[0]},{coordinates[1]}"
+
+
+def _get_gis_status(is_inside: bool) -> str:
+    """Get GIS status string."""
+    return "inside" if is_inside else "outside"
+
+
 @notifications_router.message(MeetingCreation.address)
 async def meeting_address(
     message: types.Message, state: FSMContext,
@@ -208,12 +222,10 @@ async def meeting_address(
             "Попробуйте другой адрес или выберите онлайн:",
         )
         return
-    coord_val = f"{gis_result.coordinates[0]},{gis_result.coordinates[1]}"
-    gis_status_val = "inside" if gis_result.inside_zone else "outside"
     await state.update_data(
         address=address_val,
-        coordinates=coord_val,
-        gis_check_result=gis_status_val,
+        coordinates=_format_coordinates(gis_result.coordinates),
+        gis_check_result=_get_gis_status(gis_result.inside_zone),
     )
     if not gis_result.inside_zone:
         await message.answer(
@@ -288,6 +300,21 @@ async def _show_meeting_info(callback: types.CallbackQuery) -> None:
             await callback.message.edit_text(text)
 
 
+def _format_notification_title(notif: object) -> str:
+    """Format notification with read/unread mark."""
+    read_mark = "✅" if notif.is_read else "🔔"  # type: ignore[union-attr]
+    return f"{read_mark} {notif.title}"  # type: ignore[union-attr]
+
+
+def _build_notifications_text(notifications: list) -> str:
+    """Build notifications list text."""
+    lines = ["<b>Уведомления</b>", ""]
+    lines.extend(
+        _format_notification_title(notif) for notif in notifications[:10]
+    )
+    return "\n".join(lines)
+
+
 @notifications_router.callback_query(F.data == "notifications")
 async def show_notifications(callback: types.CallbackQuery) -> None:
     """Show user notifications."""
@@ -302,9 +329,5 @@ async def show_notifications(callback: types.CallbackQuery) -> None:
         if not notifications:
             await callback.message.edit_text("Уведомлений нет.")
             return
-        lines = ["<b>Уведомления</b>", ""]
-        for notif in notifications[:10]:
-            read_mark = "✅" if notif.is_read else "🔔"
-            lines.append(f"{read_mark} {notif.title}")
-        text = "\n".join(lines)
+        text = _build_notifications_text(notifications)
         await callback.message.edit_text(text)

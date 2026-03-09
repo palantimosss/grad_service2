@@ -41,58 +41,78 @@ def _adjust_double(builder: InlineKeyboardBuilder) -> None:
     builder.adjust(2)
 
 
-def get_role_keyboard() -> InlineKeyboardMarkup:
-    """Get role selection keyboard."""
+def _build_single_column_keyboard(
+    buttons: list[tuple[str, str]],
+) -> InlineKeyboardMarkup:
+    """Build single column keyboard from button list."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Клиент", callback_data="role_client")
-    builder.button(text="Руководитель", callback_data="role_manager")
-    builder.button(text="Исполнитель", callback_data="role_performer")
+    for text, callback in buttons:
+        builder.button(text=text, callback_data=callback)
     _adjust_single(builder)
     return builder.as_markup()
+
+
+def _build_double_column_keyboard(
+    buttons: list[tuple[str, str]],
+) -> InlineKeyboardMarkup:
+    """Build double column keyboard from button list."""
+    builder = InlineKeyboardBuilder()
+    for text, callback in buttons:
+        builder.button(text=text, callback_data=callback)
+    _adjust_double(builder)
+    return builder.as_markup()
+
+
+def get_role_keyboard() -> InlineKeyboardMarkup:
+    """Get role selection keyboard."""
+    return _build_single_column_keyboard([
+        ("Клиент", "role_client"),
+        ("Руководитель", "role_manager"),
+        ("Исполнитель", "role_performer"),
+    ])
 
 
 def get_main_menu_keyboard(role: UserRole) -> InlineKeyboardMarkup:
     """Get main menu keyboard based on role."""
-    builder = InlineKeyboardBuilder()
-
     if role == UserRole.CLIENT:
-        builder.button(text="Мои проекты", callback_data="my_projects")
-        builder.button(text="Создать проект", callback_data="create_project")
-        builder.button(text="Профиль", callback_data="profile")
+        return _build_single_column_keyboard([
+            ("Мои проекты", "my_projects"),
+            ("Создать проект", "create_project"),
+            ("Профиль", "profile"),
+        ])
     elif role == UserRole.MANAGER:
-        builder.button(text="Все проекты", callback_data="all_projects")
-        builder.button(text="Заявки", callback_data="pending_projects")
-        builder.button(text="Задачи", callback_data="all_tasks")
-        builder.button(text="Клиенты", callback_data="clients")
-        builder.button(text="Статистика", callback_data="statistics")
-        builder.button(text="Профиль", callback_data="profile")
-    elif role == UserRole.PERFORMER:
-        builder.button(text="Мои задачи", callback_data="my_tasks")
-        builder.button(text="Проекты", callback_data="projects")
-        builder.button(text="Профиль", callback_data="profile")
-
-    _adjust_single(builder)
-    return builder.as_markup()
+        return _build_single_column_keyboard([
+            ("Все проекты", "all_projects"),
+            ("Заявки", "pending_projects"),
+            ("Задачи", "all_tasks"),
+            ("Клиенты", "clients"),
+            ("Статистика", "statistics"),
+            ("Профиль", "profile"),
+        ])
+    else:  # PERFORMER
+        return _build_single_column_keyboard([
+            ("Мои задачи", "my_tasks"),
+            ("Проекты", "projects"),
+            ("Профиль", "profile"),
+        ])
 
 
 def get_profile_keyboard() -> InlineKeyboardMarkup:
     """Get profile keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(text="Редактировать", callback_data="edit_profile")
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
-    _adjust_double(builder)
-    return builder.as_markup()
+    return _build_double_column_keyboard([
+        ("Редактировать", "edit_profile"),
+        (_BACK_TEXT, _BACK_MENU),
+    ])
 
 
 def get_edit_profile_keyboard() -> InlineKeyboardMarkup:
     """Get edit profile keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(text="Телефон", callback_data="edit_phone")
-    builder.button(text="Email", callback_data="edit_email")
-    builder.button(text="Должность", callback_data="edit_position")
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_PROFILE)
-    _adjust_double(builder)
-    return builder.as_markup()
+    return _build_double_column_keyboard([
+        ("Телефон", "edit_phone"),
+        ("Email", "edit_email"),
+        ("Должность", "edit_position"),
+        (_BACK_TEXT, _BACK_PROFILE),
+    ])
 
 
 def get_projects_keyboard(projects: list) -> InlineKeyboardMarkup:
@@ -108,47 +128,37 @@ def get_projects_keyboard(projects: list) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def _get_project_action_buttons(
+    project_id: int, role: UserRole,
+) -> list[tuple[str, str]]:
+    """Get project action buttons based on role."""
+    if role == UserRole.CLIENT:
+        return [
+            ("Загрузить документ", f"upload_doc_{project_id}"),
+            ("Обратная связь", f"feedback_{project_id}"),
+            (_BACK_TEXT, _BACK_MENU),
+        ]
+    elif role == UserRole.MANAGER:
+        return [
+            ("Создать задачу", f"create_task_{project_id}"),
+            ("Создать этап", f"create_stage_{project_id}"),
+            ("Создать встречу", f"create_meeting_{project_id}"),
+            ("Статус проекта", f"project_status_{project_id}"),
+            (_BACK_TEXT, _BACK_MENU),
+        ]
+    else:  # PERFORMER
+        return [
+            ("Загрузить документ", f"upload_doc_{project_id}"),
+            (_BACK_TEXT, _BACK_MENU),
+        ]
+
+
 def get_project_actions_keyboard(
     project_id: int, role: UserRole,
 ) -> InlineKeyboardMarkup:
     """Get project actions keyboard."""
-    builder = InlineKeyboardBuilder()
-
-    if role == UserRole.CLIENT:
-        builder.button(
-            text="Загрузить документ",
-            callback_data=f"upload_doc_{project_id}",
-        )
-        builder.button(
-            text="Обратная связь",
-            callback_data=f"feedback_{project_id}",
-        )
-    elif role == UserRole.MANAGER:
-        builder.button(
-            text="Создать задачу",
-            callback_data=f"create_task_{project_id}",
-        )
-        builder.button(
-            text="Создать этап",
-            callback_data=f"create_stage_{project_id}",
-        )
-        builder.button(
-            text="Создать встречу",
-            callback_data=f"create_meeting_{project_id}",
-        )
-        builder.button(
-            text="Статус проекта",
-            callback_data=f"project_status_{project_id}",
-        )
-    elif role == UserRole.PERFORMER:
-        builder.button(
-            text="Загрузить документ",
-            callback_data=f"upload_doc_{project_id}",
-        )
-
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_MENU)
-    _adjust_single(builder)
-    return builder.as_markup()
+    buttons = _get_project_action_buttons(project_id, role)
+    return _build_single_column_keyboard(buttons)
 
 
 def get_project_status_keyboard(project_id: int) -> InlineKeyboardMarkup:
@@ -164,11 +174,16 @@ def get_project_status_keyboard(project_id: int) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def _get_task_emoji(status: TaskStatus) -> str:
+    """Get emoji for task status."""
+    return "⏳" if status == TaskStatus.PENDING else "✅"
+
+
 def get_tasks_keyboard(tasks: list) -> InlineKeyboardMarkup:
     """Get tasks list keyboard."""
     builder = InlineKeyboardBuilder()
     for task in tasks:
-        emoji = "⏳" if task.status == TaskStatus.PENDING else "✅"
+        emoji = _get_task_emoji(task.status)
         builder.button(
             text=f"{emoji} {task.title}",
             callback_data=f"task_{task.id}",
@@ -178,30 +193,26 @@ def get_tasks_keyboard(tasks: list) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def _get_task_action_buttons(
+    task_id: int, status: TaskStatus,
+) -> list[tuple[str, str]]:
+    """Get task action buttons based on status."""
+    buttons = []
+    if status == TaskStatus.PENDING:
+        buttons.append(("Взять в работу", f"task_start_{task_id}"))
+    elif status == TaskStatus.IN_PROGRESS:
+        buttons.append(("Завершить", f"task_complete_{task_id}"))
+    buttons.append(("Загрузить документ", f"upload_doc_task_{task_id}"))
+    buttons.append((_BACK_TEXT, _BACK_TASKS))
+    return buttons
+
+
 def get_task_actions_keyboard(
     task_id: int, status: TaskStatus,
 ) -> InlineKeyboardMarkup:
     """Get task actions keyboard."""
-    builder = InlineKeyboardBuilder()
-
-    if status == TaskStatus.PENDING:
-        builder.button(
-            text="Взять в работу",
-            callback_data=f"task_start_{task_id}",
-        )
-    elif status == TaskStatus.IN_PROGRESS:
-        builder.button(
-            text="Завершить",
-            callback_data=f"task_complete_{task_id}",
-        )
-
-    builder.button(
-        text="Загрузить документ",
-        callback_data=f"upload_doc_task_{task_id}",
-    )
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_TASKS)
-    _adjust_single(builder)
-    return builder.as_markup()
+    buttons = _get_task_action_buttons(task_id, status)
+    return _build_single_column_keyboard(buttons)
 
 
 def get_documents_keyboard(
@@ -225,19 +236,11 @@ def get_document_download_keyboard(
     can_delete: bool = False,  # noqa: FBT001, FBT002
 ) -> InlineKeyboardMarkup:
     """Get document download keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Скачать",
-        callback_data=f"download_doc_{document_id}",
-    )
+    buttons = [("Скачать", f"download_doc_{document_id}")]
     if can_delete:
-        builder.button(
-            text="Удалить",
-            callback_data=f"delete_doc_{document_id}",
-        )
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_DOCUMENTS)
-    _adjust_double(builder)
-    return builder.as_markup()
+        buttons.append(("Удалить", f"delete_doc_{document_id}"))
+    buttons.append((_BACK_TEXT, _BACK_DOCUMENTS))
+    return _build_double_column_keyboard(buttons)
 
 
 def get_document_type_keyboard() -> InlineKeyboardMarkup:
@@ -281,34 +284,26 @@ def get_meeting_response_keyboard(
     meeting_id: int,
 ) -> InlineKeyboardMarkup:
     """Get meeting response keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Подтвердить",
-        callback_data=f"meeting_confirm_{meeting_id}",
-    )
-    builder.button(
-        text="Отклонить",
-        callback_data=f"meeting_decline_{meeting_id}",
-    )
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_MEETINGS)
-    _adjust_double(builder)
-    return builder.as_markup()
+    return _build_double_column_keyboard([
+        ("Подтвердить", f"meeting_confirm_{meeting_id}"),
+        ("Отклонить", f"meeting_decline_{meeting_id}"),
+        (_BACK_TEXT, _BACK_MEETINGS),
+    ])
 
 
 def get_yes_no_keyboard() -> InlineKeyboardMarkup:
     """Get yes/no keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(text=_YES_TEXT, callback_data="yes")
-    builder.button(text=_NO_TEXT, callback_data="no")
-    _adjust_double(builder)
-    return builder.as_markup()
+    return _build_double_column_keyboard([
+        (_YES_TEXT, "yes"),
+        (_NO_TEXT, "no"),
+    ])
 
 
 def get_cancel_keyboard() -> InlineKeyboardMarkup:
     """Get cancel keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(text=_CANCEL_TEXT, callback_data="cancel")
-    return builder.as_markup()
+    return _build_single_column_keyboard([
+        (_CANCEL_TEXT, "cancel"),
+    ])
 
 
 def get_clients_keyboard(companies: list) -> InlineKeyboardMarkup:
@@ -329,20 +324,16 @@ def get_notification_keyboard(
     notification_id: int,
 ) -> InlineKeyboardMarkup:
     """Get notification keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Отметить прочитанным",
-        callback_data=f"notif_read_{notification_id}",
-    )
-    builder.button(text=_BACK_TEXT, callback_data=_BACK_NOTIFICATIONS)
-    _adjust_single(builder)
-    return builder.as_markup()
+    return _build_single_column_keyboard([
+        ("Отметить прочитанным", f"notif_read_{notification_id}"),
+        (_BACK_TEXT, _BACK_NOTIFICATIONS),
+    ])
 
 
 def get_back_keyboard(
     callback: str = _BACK_MENU,
 ) -> InlineKeyboardMarkup:
     """Get simple back keyboard."""
-    builder = InlineKeyboardBuilder()
-    builder.button(text=_BACK_TEXT, callback_data=callback)
-    return builder.as_markup()
+    return _build_single_column_keyboard([
+        (_BACK_TEXT, callback),
+    ])
