@@ -17,6 +17,9 @@ TITLE_MAX_LENGTH = 255
 # Relationship cascade constants
 CASCADE_DELETE = "all, delete-orphan"
 
+# Relationship back_populates constant
+_PROJECT_RELATIONSHIP = "project"
+
 
 class Project(Base):
     """Project model."""
@@ -56,26 +59,26 @@ class Project(Base):
     client_company = relationship("ClientCompany", back_populates="projects")
     tasks = relationship(
         "Task",
-        back_populates="project",
+        back_populates=_PROJECT_RELATIONSHIP,
         cascade=CASCADE_DELETE,
     )
     stages = relationship(
         "ProjectStage",
-        back_populates="project",
+        back_populates=_PROJECT_RELATIONSHIP,
         cascade=CASCADE_DELETE,
     )
     documents = relationship(
         "Document",
-        back_populates="project",
+        back_populates=_PROJECT_RELATIONSHIP,
         cascade=CASCADE_DELETE,
     )
     meetings = relationship(
         "Meeting",
-        back_populates="project",
+        back_populates=_PROJECT_RELATIONSHIP,
         cascade=CASCADE_DELETE,
     )
     feedbacks = relationship(
         "Feedback",
-        back_populates="project",
+        back_populates=_PROJECT_RELATIONSHIP,
         cascade=CASCADE_DELETE,
     )

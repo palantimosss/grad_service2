@@ -1,29 +1,16 @@
 """Task CRUD operations."""
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, select, update
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from sqlalchemy.ext.asyncio import AsyncSession
+
+    from bot.database.crud_modules._task_params import TaskCreateParams
 
 from bot.database.models.enums import TaskStatus
 from bot.database.models.task import Task
-
-
-class TaskCreateParams(TypedDict, total=False):
-    """Parameters for creating a task."""
-
-    project_id: int
-    title: str
-    description: str | None
-    performer_id: int | None
-    manager_id: int | None
-    deadline: datetime | None
-    priority: int
-    status: TaskStatus
 
 
 async def get_task_by_id(

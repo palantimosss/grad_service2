@@ -44,11 +44,9 @@ class TestDocumentTypeKeyboard:
         keyboard = get_document_type_keyboard()
         buttons = _get_keyboard_buttons(keyboard)
         # Check for document type buttons (English or Russian)
+        doc_types = ("Source", "Исходный", "Work", "Result", "Other")
         has_doc_type = any(
-            doc_type in btn for doc_type in [
-                "Source", "Исходный", "Work", "Result", "Other",
-            ]
-            for btn in buttons
+            doc_type in btn for doc_type in doc_types for btn in buttons
         )
         assert has_doc_type or any(
             "source" in btn.lower() for btn in buttons

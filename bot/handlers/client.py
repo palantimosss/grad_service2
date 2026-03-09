@@ -1,10 +1,9 @@
 """Client handlers: projects, documents, feedback."""
 
 import logging
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 if TYPE_CHECKING:
     from aiogram.fsm.context import FSMContext
@@ -18,7 +17,6 @@ from bot.database.crud_modules.feedback_crud import (
     create_feedback,
 )
 from bot.database.crud_modules.project_crud import (
-    ProjectCreateParams,
     create_project,
     get_project_by_id,
     get_projects_by_client_id,
@@ -26,6 +24,12 @@ from bot.database.crud_modules.project_crud import (
 from bot.database.crud_modules.user_crud import get_user_by_telegram_id
 from bot.database.database import get_session
 from bot.database.models.enums import DocumentType, ProjectStatus
+from bot.handlers._client_helpers import (
+    format_project_text,
+    get_skip_option,
+    parse_budget,
+    parse_deadline,
+)
 from bot.keyboards.menus import (
     get_back_keyboard,
     get_project_actions_keyboard,
@@ -37,95 +41,64 @@ logger = logging.getLogger(__name__)
 
 client_router = Router()
 
-# Status map for display (immutable tuple)
-_STATUS_MAP = (
-    ("draft", "Черновик"),
-    ("pending", "На регистрации"),
-    ("registered", "Зарегистрирован"),
-    ("in_progress", "В работе"),
-    ("on_hold", "Приостановлен"),
-    ("completed", "Завершён"),
-    ("archived", "Архив"),
-)
-
-# Skip option text
-_SKIP_OPTION = "пропустить"
+_PROJECT_ID_KEY = "project_id"
+_AUTHOR_ID_KEY = "author_id"
+_SKIP_OPTION = get_skip_option()
 
 
-def _get_status_text(status_value: str) -> str:
-    """Get status text from status value."""
-    for key, value in _STATUS_MAP:
-        if key == status_value:
-            return value
-    return status_value
-
-
-def _parse_deadline(text: str) -> datetime | None:
-    """Parse deadline from text."""
-    if text == _SKIP_OPTION:
-        return None
-    try:
-        return datetime.strptime(text, "%d.%m.%Y %H:%M").replace(
-            tzinfo=UTC,
-        )
-    except ValueError:
-        return None
-
-
-def _parse_budget(text: str) -> float | None:
-    """Parse budget from text."""
-    if text == _SKIP_OPTION:
-        return None
-    try:
-        return float(text.replace(",", "."))
-    except ValueError:
-        return None
-
-
-def _build_project_params(
+async def _create_project_in_db(
+    session: object,
     project_data: dict,
     user_id: int,
-) -> ProjectCreateParams:
-    """Build project creation params."""
-    project_params: ProjectCreateParams = {
+) -> None:
+    """Create project in database."""
+    create_params = {
         "title": project_data["title"],
         "client_id": user_id,
-        "status": ProjectStatus.PENDING,
+        "status": ProjectStatus.DRAFT,
     }
     if project_data.get("description"):
-        project_params["description"] = project_data["description"]
+        create_params["description"] = project_data["description"]
     if project_data.get("deadline"):
-        project_params["deadline"] = project_data["deadline"]
-    if project_data.get("budget") is not None:
-        project_params["budget"] = project_data["budget"]
-    return project_params
+        create_params["deadline"] = project_data["deadline"]
+    if project_data.get("budget"):
+        create_params["budget"] = project_data["budget"]
+    await create_project(session=session, params=create_params)
 
 
-def _format_project_text(project: object) -> str:
-    """Format project details as text."""
-    status_text = _get_status_text(
-        project.status.value,  # type: ignore[union-attr]
-    )
-    description_val = (
-        project.description or "Нет"  # type: ignore[union-attr]
-    )
-    deadline_val = (
-        project.deadline or "Не установлен"  # type: ignore[union-attr]
-    )
-    budget_val = (
-        project.budget or "Не указан"  # type: ignore[union-attr]
-    )
-    return "\n".join([
-        f"<b>{project.title}</b>",  # type: ignore[union-attr]
-        "",
-        f"Статус: {status_text}",
-        f"Описание: {description_val}",
-        f"Дедлайн: {deadline_val}",
-        f"Бюджет: {budget_val}",
-    ])
+async def _create_document_in_db(
+    session: object,
+    doc_data: dict,
+) -> None:
+    """Create document in database."""
+    doc_params: DocumentCreateParams = {
+        _PROJECT_ID_KEY: doc_data[_PROJECT_ID_KEY],
+        "file_path": doc_data["file_path"],
+        "file_name": doc_data["file_name"],
+        "file_size": doc_data["file_size"],
+        "document_type": DocumentType.SOURCE,
+        "uploaded_by": doc_data["user_id"],
+    }
+    await create_document(session=session, params=doc_params)
 
 
-@client_router.callback_query(F.data == "my_projects")
+async def _create_feedback_in_db(
+    session: object,
+    feedback_data: dict,
+) -> None:
+    """Create feedback in database."""
+    feedback_params: FeedbackCreateParams = {
+        _PROJECT_ID_KEY: feedback_data[_PROJECT_ID_KEY],
+        _AUTHOR_ID_KEY: feedback_data[_AUTHOR_ID_KEY],
+        "message": feedback_data["message"],
+        "rating": None,
+    }
+    await create_feedback(session=session, params=feedback_params)
+
+
+@client_router.callback_query(
+    lambda callback: callback.data == "my_projects",
+)
 async def my_projects(callback: types.CallbackQuery) -> None:
     """Show client's projects."""
     async for session in get_session():
@@ -146,7 +119,9 @@ async def my_projects(callback: types.CallbackQuery) -> None:
         )
 
 
-@client_router.callback_query(F.data == "create_project")
+@client_router.callback_query(
+    lambda callback: callback.data == "create_project",
+)
 async def create_project_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:
@@ -158,12 +133,12 @@ async def create_project_start(
 
 
 @client_router.message(ProjectCreation.title)
-async def project_title(message: types.Message, state: FSMContext) -> None:
+async def project_title(
+    message: types.Message, state: FSMContext,
+) -> None:
     """Process project title."""
     await state.update_data(title=message.text)
-    await message.answer(
-        f"Введите описание проекта (или '{_SKIP_OPTION}'):",
-    )
+    await message.answer(f"Введите описание (или '{_SKIP_OPTION}'):")
     await state.set_state(ProjectCreation.description)
 
 
@@ -172,13 +147,13 @@ async def project_description(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process project description."""
-    desc: str | None = None
+    desc_val: str | None = None
     if message.text != _SKIP_OPTION:
-        desc = message.text
-    await state.update_data(description=desc)
+        desc_val = message.text
+    await state.update_data(description=desc_val)
     await message.answer(
-        "Введите дедлайн в формате ДД.ММ.ГГГГ ЧЧ:ММ "
-        f"(или '{_SKIP_OPTION}'):",
+        "Введите дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ) "
+        f"или '{_SKIP_OPTION}':",
     )
     await state.set_state(ProjectCreation.deadline)
 
@@ -188,15 +163,12 @@ async def project_deadline(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process project deadline."""
-    deadline = _parse_deadline(message.text)
+    deadline = parse_deadline(message.text)
     if deadline is None and message.text != _SKIP_OPTION:
-        await message.answer(
-            "Неверный формат. Попробуйте снова или "
-            f"'{_SKIP_OPTION}':",
-        )
+        await message.answer("Неверный формат:")
         return
     await state.update_data(deadline=deadline)
-    await message.answer(f"Введите бюджет (или '{_SKIP_OPTION}'):")
+    await message.answer("Введите бюджет (или 'пропустить'):")
     await state.set_state(ProjectCreation.budget)
 
 
@@ -204,78 +176,88 @@ async def project_deadline(
 async def project_budget(
     message: types.Message, state: FSMContext,
 ) -> None:
-    """Process project budget."""
-    budget = _parse_budget(message.text)
+    """Process project budget and create project."""
+    budget = parse_budget(message.text)
     if budget is None and message.text != _SKIP_OPTION:
-        await message.answer(
-            "Неверный формат. Попробуйте снова или "
-            f"'{_SKIP_OPTION}':",
-        )
+        await message.answer("Введите число:")
         return
     await state.update_data(budget=budget)
     project_data = await state.get_data()
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        project_params = _build_project_params(project_data, user.id)
-        await create_project(session=session, params=project_params)
-    await message.answer(
-        "Проект создан и отправлен на регистрацию!",
-        reply_markup=get_back_keyboard("my_projects"),
-    )
+        await _create_project_in_db(session, project_data, user.id)
+    await message.answer("Проект создан!")
     await state.clear()
 
 
-@client_router.callback_query(F.data.startswith("project_"))
+@client_router.callback_query(
+    lambda callback: callback.data.startswith("project_"),
+)
 async def project_detail(callback: types.CallbackQuery) -> None:
     """Show project details."""
-    project_id = int(callback.data.split("_")[1])
+    parts = callback.data.split("_")
+    project_id = int(parts[1])
     async for session in get_session():
         user = await get_user_by_telegram_id(session, callback.from_user.id)
         project = await get_project_by_id(session, project_id)
         if not project:
             await callback.answer("Проект не найден", show_alert=True)
             return
-        text = _format_project_text(project)
+        text = format_project_text(project)
         await callback.message.edit_text(
             text,
             reply_markup=get_project_actions_keyboard(project_id, user.role),
         )
 
 
-@client_router.callback_query(F.data.startswith("upload_doc_"))
+@client_router.callback_query(
+    lambda callback: callback.data.startswith("upload_doc_"),
+)
 async def upload_doc_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:
     """Start document upload."""
-    project_id = int(callback.data.split("_")[2])
+    parts = callback.data.split("_")
+    project_id = int(parts[2])
     await state.update_data(project_id=project_id)
     await callback.message.edit_text("Отправьте файл для загрузки:")
     await state.set_state(DocumentUpload.document_file)
 
 
-@client_router.message(DocumentUpload.document_file, F.document)
+@client_router.message(DocumentUpload.document_file)
 async def upload_doc_file(
     message: types.Message, state: FSMContext,
 ) -> None:
     """Process document file."""
     state_data = await state.get_data()
     project_id = state_data.get("project_id")
+    await _process_document_upload(message, state, project_id)
+
+
+async def _process_document_upload(
+    message: types.Message,
+    state: FSMContext,
+    project_id: int | None,
+) -> None:
+    """Process document upload and save to database."""
     document_file = message.document
     file_name = document_file.file_name
+    file_size = document_file.file_size
+    dest = f"data/files/{project_id}_{file_name}"
+    file_path_obj = await message.bot.get_file(document_file.file_id)
+    await message.bot.download_file(file_path_obj.file_path, dest)
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        file_path_obj = await message.bot.get_file(document_file.file_id)
-        dest = f"data/files/{project_id}_{file_name}"
-        await message.bot.download_file(file_path_obj.file_path, dest)
-        doc_params: DocumentCreateParams = {
-            "project_id": project_id,
-            "file_path": dest,
-            "file_name": file_name,
-            "file_size": document_file.file_size,
-            "document_type": DocumentType.SOURCE,
-            "uploaded_by": user.id,
-        }
-        await create_document(session=session, params=doc_params)
+        await _create_document_in_db(
+            session,
+            {
+                "project_id": project_id,
+                "file_path": dest,
+                "file_name": file_name,
+                "file_size": file_size,
+                "user_id": user.id,
+            },
+        )
     await message.answer(
         "Документ загружен!",
         reply_markup=get_back_keyboard(f"project_{project_id}"),
@@ -283,12 +265,15 @@ async def upload_doc_file(
     await state.clear()
 
 
-@client_router.callback_query(F.data.startswith("feedback_"))
+@client_router.callback_query(
+    lambda callback: callback.data.startswith("feedback_"),
+)
 async def feedback_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:
     """Start feedback creation."""
-    project_id = int(callback.data.split("_")[1])
+    parts = callback.data.split("_")
+    project_id = int(parts[1])
     await state.update_data(project_id=project_id)
     await callback.message.edit_text("Введите ваш отзыв о проекте:")
     await state.set_state(FeedbackCreation.message)
@@ -301,15 +286,25 @@ async def feedback_message(
     """Process feedback message."""
     state_data = await state.get_data()
     project_id = state_data.get("project_id")
+    await _process_feedback_creation(message, state, project_id)
+
+
+async def _process_feedback_creation(
+    message: types.Message,
+    state: FSMContext,
+    project_id: int | None,
+) -> None:
+    """Process feedback creation and save to database."""
     async for session in get_session():
         user = await get_user_by_telegram_id(session, message.from_user.id)
-        feedback_params: FeedbackCreateParams = {
-            "project_id": project_id,
-            "author_id": user.id,
-            "message": message.text,
-            "rating": None,
-        }
-        await create_feedback(session=session, params=feedback_params)
+        await _create_feedback_in_db(
+            session,
+            {
+                "project_id": project_id,
+                "author_id": user.id,
+                "message": message.text,
+            },
+        )
     await message.answer(
         "Спасибо за ваш отзыв!",
         reply_markup=get_back_keyboard(f"project_{project_id}"),

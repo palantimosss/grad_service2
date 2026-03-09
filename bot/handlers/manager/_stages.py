@@ -4,7 +4,7 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 if TYPE_CHECKING:
     from aiogram.fsm.context import FSMContext
@@ -53,7 +53,9 @@ def _build_stage_params(stage_data: dict) -> StageCreateParams:
     return stage_params
 
 
-@stages_router.callback_query(F.data.startswith("create_stage_"))
+@stages_router.callback_query(
+    lambda callback: callback.data.startswith("create_stage_"),
+)
 async def create_stage_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:

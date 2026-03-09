@@ -30,7 +30,9 @@ def _build_notifications_text(notifications: list) -> str:
     return "\n".join(lines)
 
 
-@notification_router.callback_query(lambda c: c.data == "notifications")
+@notification_router.callback_query(
+    lambda callback: callback.data == "notifications",
+)
 async def show_notifications(callback: types.CallbackQuery) -> None:
     """Show user notifications."""
     async for session in get_session():

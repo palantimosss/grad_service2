@@ -3,7 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 from aiogram.filters import Command
 
 if TYPE_CHECKING:
@@ -26,14 +26,11 @@ logger = logging.getLogger(__name__)
 
 profile_router = Router()
 
-# Field name mappings (immutable tuple)
 _FIELD_NAMES = (
     ("phone", "телефон"),
     ("email", "email"),
     ("position", "должность"),
 )
-
-_POSITION_KEY = "position"
 
 
 def _get_field_label(field_key: str) -> str:
@@ -44,22 +41,29 @@ def _get_field_label(field_key: str) -> str:
     return field_key
 
 
+def _get_user_profile_values(user: object) -> dict[str, str]:
+    """Get user profile values as dict."""
+    return {
+        "last_name": user.last_name or "",  # type: ignore[union-attr]
+        "phone": user.phone or "Не указан",  # type: ignore[union-attr]
+        "email": user.email or "Не указан",  # type: ignore[union-attr]
+        "position": user.position or "Не указана",  # type: ignore[union-attr]
+        "first_name": user.first_name,  # type: ignore[union-attr]
+        "role": user.role.value,  # type: ignore[union-attr]
+    }
+
+
 def _build_profile_text(user: object) -> str:
     """Build profile text from user object."""
-    last_name = user.last_name or ""  # type: ignore[union-attr]
-    phone_val = user.phone or "Не указан"  # type: ignore[union-attr]
-    email_val = user.email or "Не указан"  # type: ignore[union-attr]
-    position_val = user.position or "Не указана"  # type: ignore[union-attr]
-    first_name = user.first_name  # type: ignore[union-attr]
-    role_val = user.role.value  # type: ignore[union-attr]
+    profile_values = _get_user_profile_values(user)
     return "\n".join([
         "<b>Профиль</b>",
         "",
-        f"Имя: {first_name} {last_name}",
-        f"Роль: {role_val}",
-        f"Телефон: {phone_val}",
-        f"Email: {email_val}",
-        f"Должность: {position_val}",
+        f"Имя: {profile_values['first_name']} {profile_values['last_name']}",
+        f"Роль: {profile_values['role']}",
+        f"Телефон: {profile_values['phone']}",
+        f"Email: {profile_values['email']}",
+        f"Должность: {profile_values['position']}",
     ])
 
 
@@ -79,7 +83,9 @@ async def cmd_profile(message: types.Message) -> None:
         )
 
 
-@profile_router.callback_query(F.data == "profile")
+@profile_router.callback_query(
+    lambda callback: callback.data == "profile",
+)
 async def show_profile(callback: types.CallbackQuery) -> None:
     """Show user profile."""
     async for session in get_session():
@@ -95,7 +101,9 @@ async def show_profile(callback: types.CallbackQuery) -> None:
         )
 
 
-@profile_router.callback_query(F.data == "edit_profile")
+@profile_router.callback_query(
+    lambda callback: callback.data == "edit_profile",
+)
 async def edit_profile(callback: types.CallbackQuery) -> None:
     """Edit user profile."""
     await callback.message.edit_text(
@@ -104,7 +112,9 @@ async def edit_profile(callback: types.CallbackQuery) -> None:
     )
 
 
-@profile_router.callback_query(F.data.startswith("edit_"))
+@profile_router.callback_query(
+    lambda callback: callback.data.startswith("edit_"),
+)
 async def edit_field(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:

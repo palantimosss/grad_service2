@@ -15,6 +15,31 @@ class GISCheckResult(NamedTuple):
     message: str
 
 
+def _build_error_result(message: str) -> GISCheckResult:
+    """Build error result."""
+    return GISCheckResult(
+        success=False,
+        coordinates=None,
+        inside_zone=False,
+        message=message,
+    )
+
+
+def _build_success_result(
+    coordinates: tuple[float, float],
+    *,
+    is_inside: bool,
+    message: str,
+) -> GISCheckResult:
+    """Build success result."""
+    return GISCheckResult(
+        success=True,
+        coordinates=coordinates,
+        inside_zone=is_inside,
+        message=message,
+    )
+
+
 async def check_meeting_address(
     address: str,
 ) -> GISCheckResult:
@@ -30,22 +55,20 @@ async def check_meeting_address(
     coordinates = await geocode_address(address)
 
     if coordinates is None:
-        return GISCheckResult(
-            success=False,
-            coordinates=None,
-            inside_zone=False,
-            message="Не удалось определить координаты адреса",
+        return _build_error_result(
+            "Не удалось определить координаты адреса",
         )
 
+    return _check_coordinates_in_zone(coordinates)
+
+
+def _check_coordinates_in_zone(
+    coordinates: tuple[float, float],
+) -> GISCheckResult:
+    """Check if coordinates are inside service zone."""
     longitude, latitude = coordinates
     zone_data = load_service_zone()
     is_inside, message = check_address_in_zone(
         longitude, latitude, zone_data,
     )
-
-    return GISCheckResult(
-        success=True,
-        coordinates=coordinates,
-        inside_zone=is_inside,
-        message=message,
-    )
+    return _build_success_result(coordinates, is_inside, message)

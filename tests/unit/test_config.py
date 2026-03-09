@@ -27,6 +27,9 @@ class TestConfig:
         assert HOUR_SECONDS == _EXPECTED_HOUR_SECONDS
         assert DEADLINE_MIN_HOURS == _EXPECTED_DEADLINE_MIN_HOURS
         assert DEADLINE_MAX_HOURS == _EXPECTED_DEADLINE_MAX_HOURS
+
+    def test_base_constants(self) -> None:
+        """Test base directory constants."""
         assert BASE_DIR is not None
         assert DATA_DIR is not None
         assert DATABASE_PATH is not None

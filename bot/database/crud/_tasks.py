@@ -1,7 +1,7 @@
 """Task CRUD operations."""
 
+from bot.database.crud_modules._task_params import TaskCreateParams
 from bot.database.crud_modules.task_crud import (
-    TaskCreateParams,
     assign_task_to_performer,
     create_task,
     delete_task,

@@ -3,7 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 if TYPE_CHECKING:
     from aiogram.fsm.context import FSMContext
@@ -39,7 +39,9 @@ def _build_company_params(company_data: dict) -> CompanyCreateParams:
     return company_params
 
 
-@clients_router.callback_query(F.data == "clients")
+@clients_router.callback_query(
+    lambda callback: callback.data == "clients",
+)
 async def clients(callback: types.CallbackQuery) -> None:
     """Show clients list."""
     async for session in get_session():
@@ -49,7 +51,9 @@ async def clients(callback: types.CallbackQuery) -> None:
         )
 
 
-@clients_router.callback_query(F.data == "add_client")
+@clients_router.callback_query(
+    lambda callback: callback.data == "add_client",
+)
 async def add_client_start(
     callback: types.CallbackQuery, state: FSMContext,
 ) -> None:

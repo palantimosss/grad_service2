@@ -89,8 +89,8 @@ async def _create_user_for_stats(
 
 
 @pytest.mark.asyncio
-class TestStatisticsCRUD:
-    """Tests for statistics CRUD operations."""
+class TestStatisticsCounts:
+    """Tests for statistics count operations."""
 
     async def test_get_projects_count_by_status(
         self,
@@ -144,6 +144,11 @@ class TestStatisticsCRUD:
         stats = await get_users_count_by_role(test_session)
         assert stats[UserRole.CLIENT] == _EXPECTED_CLIENT_USERS_COUNT
         assert stats[UserRole.MANAGER] == 1
+
+
+@pytest.mark.asyncio
+class TestStatisticsTotals:
+    """Tests for statistics total count operations."""
 
     async def test_get_total_projects_count(
         self,

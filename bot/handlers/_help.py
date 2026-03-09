@@ -3,7 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 from aiogram.filters import Command
 
 if TYPE_CHECKING:
@@ -28,6 +28,38 @@ HELP_TEXT = (
 )
 
 
+@help_router.message(Command("help"))
+async def cmd_help(message: types.Message) -> None:
+    """Handle /help command."""
+    await message.answer(HELP_TEXT)
+
+
+@help_router.callback_query(
+    lambda callback: callback.data == "back_to_menu",
+)
+async def back_to_menu(callback: types.CallbackQuery) -> None:
+    """Return to main menu."""
+    async for session in get_session():
+        user = await get_user_by_telegram_id(session, callback.from_user.id)
+        if user:
+            await callback.message.edit_text(
+                "Главное меню:",
+                reply_markup=get_main_menu_keyboard(user.role),
+            )
+
+
+@help_router.callback_query(
+    lambda callback: callback.data == "cancel",
+)
+async def cancel_action(
+    callback: types.CallbackQuery, state: FSMContext,
+) -> None:
+    """Cancel current action."""
+    await state.clear()
+    await callback.message.edit_text("Действие отменено.")
+    await cmd_menu(callback.message)
+
+
 @help_router.message(Command("menu"))
 async def cmd_menu(message: types.Message) -> None:
     """Handle /menu command."""
@@ -42,31 +74,3 @@ async def cmd_menu(message: types.Message) -> None:
             await message.answer(
                 "Сначала зарегистрируйтесь командой /start",
             )
-
-
-@help_router.message(Command("help"))
-async def cmd_help(message: types.Message) -> None:
-    """Handle /help command."""
-    await message.answer(HELP_TEXT)
-
-
-@help_router.callback_query(F.data == "back_to_menu")
-async def back_to_menu(callback: types.CallbackQuery) -> None:
-    """Return to main menu."""
-    async for session in get_session():
-        user = await get_user_by_telegram_id(session, callback.from_user.id)
-        if user:
-            await callback.message.edit_text(
-                "Главное меню:",
-                reply_markup=get_main_menu_keyboard(user.role),
-            )
-
-
-@help_router.callback_query(F.data == "cancel")
-async def cancel_action(
-    callback: types.CallbackQuery, state: FSMContext,
-) -> None:
-    """Cancel current action."""
-    await state.clear()
-    await callback.message.edit_text("Действие отменено.")
-    await cmd_menu(callback.message)

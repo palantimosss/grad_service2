@@ -2,7 +2,7 @@
 
 import logging
 
-from aiogram import F, Router, types
+from aiogram import Router, types
 
 from bot.database.crud_modules.statistics_crud import (
     get_projects_count_by_status,
@@ -37,7 +37,9 @@ def _build_stats_text(
     return "\n".join(lines)
 
 
-@stats_router.callback_query(F.data == "statistics")
+@stats_router.callback_query(
+    lambda callback: callback.data == "statistics",
+)
 async def statistics(callback: types.CallbackQuery) -> None:
     """Show statistics."""
     async for session in get_session():

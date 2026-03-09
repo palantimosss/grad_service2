@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 performer_task_router = Router()
 
-# Status map for display (immutable tuple)
 _STATUS_MAP = (
     ("pending", "Ожидает"),
     ("in_progress", "В работе"),
@@ -39,16 +38,24 @@ def _get_status_text(status_value: str) -> str:
     return status_value
 
 
-def _build_task_text(task: object, status_text: str) -> str:
-    """Build task detail text."""
-    return "\n".join([
+def _get_task_lines(task: object, status_text: str) -> list[str]:
+    """Get task info lines."""
+    description = task.description or "Нет"
+    deadline = task.deadline or "Не установлен"
+    return [
         f"<b>{task.title}</b>",
         "",
         f"Статус: {status_text}",
-        f"Описание: {task.description or 'Нет'}",
+        f"Описание: {description}",
         f"Приоритет: {task.priority}",
-        f"Дедлайн: {task.deadline or 'Не установлен'}",
-    ])
+        f"Дедлайн: {deadline}",
+    ]
+
+
+def _build_task_text(task: object, status_text: str) -> str:
+    """Build task detail text."""
+    lines = _get_task_lines(task, status_text)
+    return "\n".join(lines)
 
 
 def _get_callback_data(callback: types.CallbackQuery) -> str:
@@ -56,14 +63,14 @@ def _get_callback_data(callback: types.CallbackQuery) -> str:
     return callback.data or ""
 
 
-def _get_task_id_from_callback(callback: types.CallbackQuery) -> int:
-    """Extract task ID from callback data."""
+def _get_task_id(callback: types.CallbackQuery) -> int:
+    """Extract task ID from callback."""
     parts = _get_callback_data(callback).split("_")
     return int(parts[1])
 
 
-def _get_task_id_from_action_callback(callback: types.CallbackQuery) -> int:
-    """Extract task ID from action callback data."""
+def _get_task_id_from_action(callback: types.CallbackQuery) -> int:
+    """Extract task ID from action callback."""
     parts = _get_callback_data(callback).split("_")
     return int(parts[2])
 
@@ -79,7 +86,7 @@ async def _update_task_status_in_db(
 
 async def _show_task_info(callback: types.CallbackQuery) -> None:
     """Show task information."""
-    task_id = _get_task_id_from_callback(callback)
+    task_id = _get_task_id(callback)
     async for session in get_session():
         task = await get_task_by_id(session, task_id)
         if not task:
@@ -93,15 +100,15 @@ async def _show_task_info(callback: types.CallbackQuery) -> None:
         )
 
 
-@performer_task_router.callback_query(lambda c: c.data == "my_tasks")
+@performer_task_router.callback_query(
+    lambda callback: callback.data == "my_tasks",
+)
 async def my_tasks(callback: types.CallbackQuery) -> None:
     """Show performer's tasks."""
     async for session in get_session():
         user = await get_user_by_telegram_id(session, callback.from_user.id)
         if not user:
-            await callback.answer(
-                "Сначала зарегистрируйтесь", show_alert=True,
-            )
+            await callback.answer("Сначала зарегистрируйтесь", show_alert=True)
             return
         tasks_list = await get_tasks_by_performer_id(session, user.id)
         if not tasks_list:
@@ -112,17 +119,19 @@ async def my_tasks(callback: types.CallbackQuery) -> None:
         )
 
 
-@performer_task_router.callback_query(lambda c: c.data.startswith("task_"))
+@performer_task_router.callback_query(
+    lambda callback: callback.data.startswith("task_"),
+)
 async def task_detail(callback: types.CallbackQuery) -> None:
     """Show task details."""
     callback_data = _get_callback_data(callback)
     if callback_data.startswith("task_start_"):
-        task_id = _get_task_id_from_action_callback(callback)
+        task_id = _get_task_id_from_action(callback)
         await _update_task_status_in_db(task_id, TaskStatus.IN_PROGRESS)
         await callback.message.edit_text(f"Задача {task_id} взята в работу.")
         return
     if callback_data.startswith("task_complete_"):
-        task_id = _get_task_id_from_action_callback(callback)
+        task_id = _get_task_id_from_action(callback)
         await _update_task_status_in_db(task_id, TaskStatus.COMPLETED)
         await callback.message.edit_text("Задача завершена!")
         return

@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 performer_project_router = Router()
 
 
-@performer_project_router.callback_query(lambda c: c.data == "projects")
+@performer_project_router.callback_query(
+    lambda callback: callback.data == "projects",
+)
 async def projects(callback: types.CallbackQuery) -> None:
     """Show projects for performer."""
     async for session in get_session():

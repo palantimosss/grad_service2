@@ -20,6 +20,22 @@ def load_service_zone() -> dict[str, Any] | None:
         return json.load(zone_file)
 
 
+def _extract_feature_polygons(feature: dict[str, Any]) -> MultiPolygonCoords:
+    """Extract polygons from a single feature."""
+    polygons: MultiPolygonCoords = []
+    geometry = feature.get("geometry", {})
+    geom_type = geometry.get("type")
+    coordinates = geometry.get("coordinates", [])
+
+    if geom_type == "Polygon":
+        polygons.append(coordinates[0])
+    elif geom_type == "MultiPolygon":
+        for polygon_coords in coordinates:
+            polygons.append(polygon_coords[0])
+
+    return polygons
+
+
 def get_zone_polygons(
     zone_data: dict[str, Any],
 ) -> MultiPolygonCoords:
@@ -28,14 +44,7 @@ def get_zone_polygons(
     features = zone_data.get("features", [])
 
     for feature in features:
-        geometry = feature.get("geometry", {})
-        geom_type = geometry.get("type")
-        coordinates = geometry.get("coordinates", [])
-
-        if geom_type == "Polygon":
-            polygons.append(coordinates[0])
-        elif geom_type == "MultiPolygon":
-            for polygon_coords in coordinates:
-                polygons.append(polygon_coords[0])
+        feature_polygons = _extract_feature_polygons(feature)
+        polygons.extend(feature_polygons)
 
     return polygons

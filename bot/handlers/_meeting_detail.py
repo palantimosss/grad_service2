@@ -1,4 +1,4 @@
-"""Meeting detail and response handlers."""
+"""Meeting detail handlers."""
 
 import logging
 
@@ -10,15 +10,12 @@ from bot.database.crud_modules.meeting_crud import (
 )
 from bot.database.database import get_session
 from bot.database.models.enums import MeetingStatus
-from bot.keyboards.menus import (
-    get_meeting_response_keyboard,
-)
+from bot.keyboards.menus import get_meeting_response_keyboard
 
 logger = logging.getLogger(__name__)
 
 meeting_detail_router = Router()
 
-# Status map for display (immutable tuple)
 _STATUS_MAP = (
     ("pending", "Ожидает"),
     ("confirmed", "Подтверждена"),
@@ -57,19 +54,19 @@ def _get_callback_data(callback: types.CallbackQuery) -> str:
     return callback.data or ""
 
 
-def _get_meeting_id_from_callback(callback: types.CallbackQuery) -> int:
-    """Extract meeting ID from callback data."""
+def _get_meeting_id(callback: types.CallbackQuery) -> int:
+    """Extract meeting ID from callback."""
     parts = _get_callback_data(callback).split("_")
     return int(parts[1])
 
 
-def _get_meeting_id_from_action_callback(callback: types.CallbackQuery) -> int:
-    """Extract meeting ID from action callback data."""
+def _get_meeting_id_from_action(callback: types.CallbackQuery) -> int:
+    """Extract meeting ID from action callback."""
     parts = _get_callback_data(callback).split("_")
     return int(parts[2])
 
 
-async def _update_meeting_status_in_db(
+async def _update_meeting_status(
     meeting_id: int,
     status: MeetingStatus,
 ) -> None:
@@ -80,7 +77,7 @@ async def _update_meeting_status_in_db(
 
 async def _show_meeting_info(callback: types.CallbackQuery) -> None:
     """Show meeting information."""
-    meeting_id = _get_meeting_id_from_callback(callback)
+    meeting_id = _get_meeting_id(callback)
     async for session in get_session():
         meeting = await get_meeting_by_id(session, meeting_id)
         if not meeting:
@@ -97,23 +94,19 @@ async def _show_meeting_info(callback: types.CallbackQuery) -> None:
 
 
 @meeting_detail_router.callback_query(
-    lambda c: c.data.startswith("meeting_"),
+    lambda callback: callback.data.startswith("meeting_"),
 )
 async def meeting_detail(callback: types.CallbackQuery) -> None:
     """Show meeting details."""
     callback_data = _get_callback_data(callback)
     if callback_data.startswith("meeting_confirm_"):
-        await _update_meeting_status_in_db(
-            _get_meeting_id_from_action_callback(callback),
-            MeetingStatus.CONFIRMED,
-        )
+        meeting_id = _get_meeting_id_from_action(callback)
+        await _update_meeting_status(meeting_id, MeetingStatus.CONFIRMED)
         await callback.message.edit_text("Встреча подтверждена!")
         return
     if callback_data.startswith("meeting_decline_"):
-        await _update_meeting_status_in_db(
-            _get_meeting_id_from_action_callback(callback),
-            MeetingStatus.CANCELLED,
-        )
+        meeting_id = _get_meeting_id_from_action(callback)
+        await _update_meeting_status(meeting_id, MeetingStatus.CANCELLED)
         await callback.message.edit_text("Встреча отклонена.")
         return
     await _show_meeting_info(callback)
