@@ -1,5 +1,7 @@
 """GIS server module for address validation."""
 
+from __future__ import annotations
+
 from typing import NamedTuple
 
 from bot.gis.geocoding import geocode_address

@@ -1,9 +1,11 @@
 """Task CRUD parameters."""
 
-from datetime import datetime  # noqa: TC003
+from __future__ import annotations  # <--- Добавлено это
+
+from datetime import datetime
 from typing import TypedDict
 
-from bot.database.models.enums import TaskStatus  # noqa: TC001
+from bot.database.models.enums import TaskStatus
 
 
 class TaskCreateParams(TypedDict, total=False):

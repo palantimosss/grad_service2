@@ -1,5 +1,7 @@
 """Geocoding module using Yandex Geocoder API."""
 
+from __future__ import annotations
+
 import httpx
 
 from bot.config import YANDEX_GEOCODER_API_KEY

@@ -1,5 +1,7 @@
 """Client helpers - status and parsing functions."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 
 # Skip option text

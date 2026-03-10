@@ -1,5 +1,7 @@
 """Zone checker for GIS module."""
 
+from __future__ import annotations
+
 from shapely.geometry import Point, Polygon
 
 from bot.gis.zone_loader import get_zone_polygons, load_service_zone
