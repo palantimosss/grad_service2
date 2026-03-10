@@ -5,7 +5,7 @@ from bot.database.crud_modules.user_crud import (
     UserUpdateParams,
 )
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "UserCreateParams",
     "UserUpdateParams",
 )

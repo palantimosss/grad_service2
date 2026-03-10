@@ -9,7 +9,7 @@ from bot.database.crud_modules.stage_crud import (
     update_stage_status,
 )
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "StageCreateParams",
     "create_stage",
     "delete_stage",

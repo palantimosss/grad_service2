@@ -8,7 +8,7 @@ from bot.handlers.manager._stages import stages_router
 from bot.handlers.manager._stats import stats_router
 from bot.handlers.manager._tasks import tasks_router
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "clients_router",
     "manager_router",
     "projects_router",

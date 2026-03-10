@@ -8,7 +8,7 @@ from bot.database.crud_modules.feedback_crud import (
     get_feedbacks_by_project_id,
 )
 
-__all__ = (
+__all__ = (   # noqa: WPS410
     "FeedbackCreateParams",
     "create_feedback",
     "delete_feedback",

@@ -8,7 +8,7 @@ from bot.database.crud_modules.project_crud import (
     update_project_status,
 )
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "assign_manager_to_project",
     "get_all_projects",
     "get_pending_projects",

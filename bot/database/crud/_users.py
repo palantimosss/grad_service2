@@ -11,7 +11,7 @@ from bot.database.crud_modules.user_crud import (
     update_user_role,
 )
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "create_user",
     "delete_user",
     "get_all_users",

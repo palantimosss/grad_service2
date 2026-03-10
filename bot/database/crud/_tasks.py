@@ -12,7 +12,7 @@ from bot.database.crud_modules.task_crud import (
     update_task_status,
 )
 
-__all__ = (
+__all__ = (  # noqa: WPS410
     "TaskCreateParams",
     "assign_task_to_performer",
     "create_task",

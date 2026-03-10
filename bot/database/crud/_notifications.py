@@ -10,7 +10,7 @@ from bot.database.crud_modules.notification_crud import (
     mark_notification_as_read,
 )
 
-__all__ = (
+__all__ = (   # noqa: WPS410
     "NotificationCreateParams",
     "create_notification",
     "delete_notification",

@@ -17,7 +17,7 @@ from bot.database.crud_modules.meeting_crud import (
     update_participant_status,
 )
 
-__all__ = (
+__all__ = (   # noqa: WPS410
     "GISLogCreateParams",
     "MeetingCreateParams",
     "add_meeting_participant",
