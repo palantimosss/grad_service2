@@ -1,5 +1,7 @@
 """Feedback CRUD operations."""
 
+from __future__ import annotations  # <--- Добавлено это
+
 from typing import TYPE_CHECKING, TypedDict
 
 from sqlalchemy import delete, select

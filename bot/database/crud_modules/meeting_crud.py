@@ -1,5 +1,7 @@
 """Meeting CRUD operations."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, TypedDict
 
 from sqlalchemy import delete, select, update

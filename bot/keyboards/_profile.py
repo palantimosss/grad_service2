@@ -1,5 +1,7 @@
 """Profile keyboards: role, main menu, profile, edit profile."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from bot.database.models.enums import UserRole

@@ -1,5 +1,7 @@
 """Document CRUD operations."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, TypedDict
 
 from sqlalchemy import delete, select, update
@@ -7,9 +9,8 @@ from sqlalchemy import delete, select, update
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from bot.database.models.enums import DocumentType
-
 from bot.database.models.document import Document
+from bot.database.models.enums import DocumentType  # noqa: TC001
 
 
 class DocumentCreateParams(TypedDict, total=False):

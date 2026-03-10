@@ -1,5 +1,7 @@
 """Project keyboards: projects list, project actions, project status."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder

@@ -1,5 +1,7 @@
 """Base model for SQLAlchemy models."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, func

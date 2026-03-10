@@ -1,5 +1,7 @@
 """Project handlers helper functions - callback utilities."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from bot.database.models.enums import ProjectStatus

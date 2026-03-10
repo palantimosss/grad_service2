@@ -1,5 +1,7 @@
 """Document keyboards: documents list, document download, document type."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from aiogram.utils.keyboard import InlineKeyboardBuilder
