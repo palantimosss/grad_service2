@@ -14,7 +14,7 @@ from bot.database.crud_modules.project_crud import (
     update_project_status,
 )
 
-__all__ = (   # noqa: WPS410
+__all__ = (
     "assign_manager_to_project",
     "create_project",
     "delete_project",

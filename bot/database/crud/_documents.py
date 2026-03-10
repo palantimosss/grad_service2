@@ -10,7 +10,7 @@ from bot.database.crud_modules.document_crud import (
     update_document,
 )
 
-__all__ = (   # noqa: WPS410
+__all__ = (
     "DocumentCreateParams",
     "create_document",
     "delete_document",

@@ -9,7 +9,7 @@ from bot.database.crud_modules.client_company_crud import (
     update_company,
 )
 
-__all__ = (  # noqa: WPS410
+__all__ = (
     "CompanyCreateParams",
     "create_company",
     "delete_company",

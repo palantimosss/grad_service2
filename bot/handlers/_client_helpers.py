@@ -8,7 +8,7 @@ from bot.handlers._client_helpers_base import (
 )
 from bot.handlers._client_helpers_format import format_project_text
 
-__all__ = (  # noqa: WPS410
+__all__ = (
     "format_project_text",
     "get_skip_option",
     "get_status_text",
